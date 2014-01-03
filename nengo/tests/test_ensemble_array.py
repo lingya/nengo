@@ -9,7 +9,7 @@ from nengo.tests.helpers import Plotter
 logger = logging.getLogger(__name__)
 
 
-def test_multidim(Simulator, nl):
+def test_multidim(Simulator, Neurons):
     """Test an ensemble array with multiple dimensions per ensemble"""
     dims = 3
     n_neurons = 60
@@ -29,9 +29,9 @@ def test_multidim(Simulator, nl):
     model = nengo.Model('Multidim', seed=123)
     inputA = nengo.Node(output=a)
     inputB = nengo.Node(output=b)
-    A = nengo.networks.EnsembleArray(nl(n_neurons), dims, radius=radius)
-    B = nengo.networks.EnsembleArray(nl(n_neurons), dims, radius=radius)
-    C = nengo.networks.EnsembleArray(nl(n_neurons * 2), dims,
+    A = nengo.networks.EnsembleArray(Neurons(n_neurons), dims, radius=radius)
+    B = nengo.networks.EnsembleArray(Neurons(n_neurons), dims, radius=radius)
+    C = nengo.networks.EnsembleArray(Neurons(n_neurons * 2), dims,
                                      dimensions=2,
                                      radius=radius, label="C")
     nengo.Connection(inputA, A.input)
@@ -47,7 +47,7 @@ def test_multidim(Simulator, nl):
     sim.run(1.0)
 
     t = sim.trange()
-    with Plotter(Simulator, nl) as plt:
+    with Plotter(Simulator, Neurons) as plt:
         def plot(sim, a, p, title=""):
             a_ref = np.tile(a, (len(t), 1))
             a_sim = sim.data(p)
@@ -90,7 +90,7 @@ def _mmul_transforms(A_shape, B_shape, C_dim):
     return transformA, transformB
 
 
-def test_matrix_mul(Simulator, nl):
+def test_matrix_mul(Simulator, Neurons):
     N = 100
 
     Amat = np.asarray([[.5, -.5]])
@@ -99,9 +99,9 @@ def test_matrix_mul(Simulator, nl):
 
     model = nengo.Model('Matrix Multiplication', seed=123)
     A = nengo.networks.EnsembleArray(
-        nl(N), Amat.size, radius=radius, label="A")
+        Neurons(N), Amat.size, radius=radius, label="A")
     B = nengo.networks.EnsembleArray(
-        nl(N), Bmat.size, radius=radius, label="B")
+        Neurons(N), Bmat.size, radius=radius, label="B")
 
     inputA = nengo.Node(output=Amat.ravel())
     inputB = nengo.Node(output=Bmat.ravel())
@@ -110,13 +110,13 @@ def test_matrix_mul(Simulator, nl):
     A_p = nengo.Probe(A.output, 'output', sample_every=0.01, filter=0.01)
     B_p = nengo.Probe(B.output, 'output', sample_every=0.01, filter=0.01)
 
-    C = nengo.networks.EnsembleArray(nl(N),
+    C = nengo.networks.EnsembleArray(Neurons(N),
                                      Amat.size * Bmat.shape[1],
                                      dimensions=2,
                                      radius=1.5 * radius,
                                      label="C")
 
-    if nl != nengo.Direct:
+    if Neurons != nengo.Direct:
         for ens in C.ensembles:
             ens.encoders = np.tile([[1, 1], [-1, 1], [1, -1], [-1, -1]],
                                    (ens.n_neurons // 4, 1))
@@ -127,7 +127,7 @@ def test_matrix_mul(Simulator, nl):
     nengo.Connection(A.output, C.input, transform=transformA)
     nengo.Connection(B.output, C.input, transform=transformB)
 
-    D = nengo.networks.EnsembleArray(nl(N),
+    D = nengo.networks.EnsembleArray(Neurons(N),
                                      Amat.shape[0] * Bmat.shape[1],
                                      radius=radius, label="D")
 
@@ -143,7 +143,7 @@ def test_matrix_mul(Simulator, nl):
     sim = Simulator(model)
     sim.run(1)
 
-    with Plotter(Simulator, nl) as plt:
+    with Plotter(Simulator, Neurons) as plt:
         t = sim.trange(dt=0.01)
         plt.plot(t, sim.data(D_p))
         for d in np.dot(Amat, Bmat).flatten():

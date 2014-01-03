@@ -11,7 +11,10 @@ def pytest_funcarg__Simulator(request):
 
 
 def pytest_generate_tests(metafunc):
-    if "nl" in metafunc.funcargnames:
-        metafunc.parametrize("nl", [nengo.LIF, nengo.LIFRate, nengo.Direct])
-    if "nl_nodirect" in metafunc.funcargnames:
-        metafunc.parametrize("nl_nodirect", [nengo.LIF, nengo.LIFRate])
+    if "Neurons" in metafunc.funcargnames:
+        metafunc.parametrize("Neurons",
+                             [nengo.LIF, nengo.LIFRate, nengo.Direct])
+    if "RateSpiking" in metafunc.funcargnames:
+        metafunc.parametrize("RateSpiking", [nengo.LIF, nengo.LIFRate])
+    if "Spiking" in metafunc.funcargnames:
+        metafunc.parametrize("Spiking", [nengo.LIF])

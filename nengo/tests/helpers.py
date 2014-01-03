@@ -23,13 +23,13 @@ class Plotter(object):
             else:
                 return Plotter.Mock()
 
-    def __init__(self, simulator, nl=None, plot=None):
+    def __init__(self, Simulator, Neurons=None, plot=None):
         if plot is None:
             self.plot = int(os.getenv("NENGO_TEST_PLOT", 0))
         else:
             self.plot = plot
-        self.nl = nl
-        self.dirname = simulator.__module__ + ".plots"
+        self.Neurons = Neurons
+        self.dirname = Simulator.__module__ + ".plots"
 
     def __enter__(self):
         if self.plot:
@@ -50,8 +50,8 @@ class Plotter(object):
 
     def savefig(self, fname, **kwargs):
         if self.plot:
-            if self.nl is not None:
-                fname = self.nl.__name__ + '.' + fname
+            if self.Neurons is not None:
+                fname = self.Neurons.__name__ + '.' + fname
             return self.oldsavefig(os.path.join(self.dirname, fname), **kwargs)
 
 

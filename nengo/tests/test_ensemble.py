@@ -46,14 +46,14 @@ def test_encoders_no_dimensions():
         test_encoders(0)
 
 
-def test_constant_scalar(Simulator, nl):
+def test_constant_scalar(Simulator, Neurons):
     """A Network that represents a constant value."""
     N = 30
     val = 0.5
 
     m = nengo.Model('test_constant_scalar', seed=123)
     input = nengo.Node(output=val, label='input')
-    A = nengo.Ensemble(nl(N), 1)
+    A = nengo.Ensemble(Neurons(N), 1)
     nengo.Connection(input, A)
     in_p = nengo.Probe(input, 'output')
     A_p = nengo.Probe(A, 'decoded_output', filter=0.1)
@@ -61,7 +61,7 @@ def test_constant_scalar(Simulator, nl):
     sim = Simulator(m, dt=0.001)
     sim.run(1.0)
 
-    with Plotter(Simulator, nl) as plt:
+    with Plotter(Simulator, Neurons) as plt:
         t = sim.trange()
         plt.plot(t, sim.data(in_p), label='Input')
         plt.plot(t, sim.data(A_p), label='Neuron approximation, pstc=0.1')
@@ -73,14 +73,14 @@ def test_constant_scalar(Simulator, nl):
     assert np.allclose(sim.data(A_p)[-10:], val, atol=.1, rtol=.01)
 
 
-def test_constant_vector(Simulator, nl):
+def test_constant_vector(Simulator, Neurons):
     """A network that represents a constant 3D vector."""
     N = 30
     vals = [0.6, 0.1, -0.5]
 
     m = nengo.Model('test_constant_vector', seed=123)
     input = nengo.Node(output=vals)
-    A = nengo.Ensemble(nl(N * len(vals)), len(vals))
+    A = nengo.Ensemble(Neurons(N * len(vals)), len(vals))
     nengo.Connection(input, A)
     in_p = nengo.Probe(input, 'output')
     A_p = nengo.Probe(A, 'decoded_output', filter=0.1)
@@ -88,7 +88,7 @@ def test_constant_vector(Simulator, nl):
     sim = Simulator(m)
     sim.run(1.0)
 
-    with Plotter(Simulator, nl) as plt:
+    with Plotter(Simulator, Neurons) as plt:
         t = sim.trange()
         plt.plot(t, sim.data(in_p), label='Input')
         plt.plot(t, sim.data(A_p), label='Neuron approximation, pstc=0.1')
@@ -100,13 +100,13 @@ def test_constant_vector(Simulator, nl):
     assert np.allclose(sim.data(A_p)[-10:], vals, atol=.1, rtol=.01)
 
 
-def test_scalar(Simulator, nl):
+def test_scalar(Simulator, Neurons):
     """A network that represents sin(t)."""
     N = 30
 
     m = nengo.Model('test_scalar', seed=123)
     input = nengo.Node(output=np.sin, label='input')
-    A = nengo.Ensemble(nl(N), 1, label='A')
+    A = nengo.Ensemble(Neurons(N), 1, label='A')
     nengo.Connection(input, A)
     in_p = nengo.Probe(input, 'output')
     A_p = nengo.Probe(A, 'decoded_output', filter=0.02)
@@ -114,7 +114,7 @@ def test_scalar(Simulator, nl):
     sim = Simulator(m)
     sim.run(5.0)
 
-    with Plotter(Simulator, nl) as plt:
+    with Plotter(Simulator, Neurons) as plt:
         t = sim.trange()
         plt.plot(t, sim.data(in_p), label='Input')
         plt.plot(t, sim.data(A_p), label='Neuron approximation, pstc=0.02')
@@ -130,13 +130,13 @@ def test_scalar(Simulator, nl):
     assert rmse(target, sim.data(A_p)) < 0.1
 
 
-def test_vector(Simulator, nl):
+def test_vector(Simulator, Neurons):
     """A network that represents sin(t), cos(t), arctan(t)."""
     N = 40
 
     m = nengo.Model('test_vector', seed=123)
     input = nengo.Node(output=lambda t: [np.sin(t), np.cos(t), np.arctan(t)])
-    A = nengo.Ensemble(nl(N * 3), 3, radius=2)
+    A = nengo.Ensemble(Neurons(N * 3), 3, radius=2)
     nengo.Connection(input, A)
     in_p = nengo.Probe(input, 'output')
     A_p = nengo.Probe(A, 'decoded_output', filter=0.02)
@@ -144,7 +144,7 @@ def test_vector(Simulator, nl):
     sim = Simulator(m)
     sim.run(5)
 
-    with Plotter(Simulator, nl) as plt:
+    with Plotter(Simulator, Neurons) as plt:
         t = sim.trange()
         plt.plot(t, sim.data(in_p), label='Input')
         plt.plot(t, sim.data(A_p), label='Neuron approximation, pstc=0.02')
@@ -160,18 +160,18 @@ def test_vector(Simulator, nl):
     assert rmse(target, sim.data(A_p)) < 0.1
 
 
-def test_product(Simulator, nl):
+def test_product(Simulator, Neurons):
     N = 80
 
     m = nengo.Model('test_product', seed=124)
     sin = nengo.Node(output=np.sin)
     cons = nengo.Node(output=-.5)
-    factors = nengo.Ensemble(nl(2 * N), dimensions=2, radius=1.5)
-    if nl != nengo.Direct:
+    factors = nengo.Ensemble(Neurons(2 * N), dimensions=2, radius=1.5)
+    if Neurons != nengo.Direct:
         factors.encoders = np.tile(
             [[1, 1], [-1, 1], [1, -1], [-1, -1]],
             (factors.n_neurons // 4, 1))
-    product = nengo.Ensemble(nl(N), dimensions=1)
+    product = nengo.Ensemble(Neurons(N), dimensions=1)
     nengo.Connection(sin, factors, transform=[[1], [0]])
     nengo.Connection(cons, factors, transform=[[0], [1]])
     nengo.Connection(
@@ -188,7 +188,7 @@ def test_product(Simulator, nl):
     sim = Simulator(m)
     sim.run(6)
 
-    with Plotter(Simulator, nl) as plt:
+    with Plotter(Simulator, Neurons) as plt:
         t = sim.trange(dt=.01)
         plt.subplot(211)
         plt.plot(t, sim.data(factors_p))

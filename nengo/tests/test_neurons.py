@@ -28,14 +28,14 @@ def test_lif_builtin():
 
     spikes = np.zeros((t_final / dt,) + J.shape)
     for i, spikes_i in enumerate(spikes):
-        lif.step_math0(dt, J, voltage, reftime, spikes_i)
+        lif.step(dt, J, voltage, reftime, spikes_i)
 
     math_rates = lif.rates(x)
     sim_rates = spikes.sum(0)
     assert np.allclose(sim_rates, math_rates, atol=1, rtol=0.02)
 
 
-def test_lif_base(nl_nodirect):
+def test_lif_base(RateSpiking):
     """Test that the dynamic model approximately matches the rates"""
     rng = np.random.RandomState(85243)
 
@@ -46,7 +46,7 @@ def test_lif_base(nl_nodirect):
     m = nengo.Model("")
 
     ins = nengo.Node(x)
-    lif = nl_nodirect(n)
+    lif = RateSpiking(n)
     lif.set_gain_bias(max_rates=rng.uniform(low=10, high=200, size=n),
                       intercepts=rng.uniform(low=-1, high=1, size=n))
     lif.add_to_model(m)

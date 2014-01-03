@@ -10,13 +10,13 @@ from nengo.tests.helpers import Plotter
 logger = logging.getLogger(__name__)
 
 
-def test_args(nl):
+def test_args(Neurons):
     N = 10
     d1, d2 = 3, 2
 
     nengo.Model('test_args')
-    A = nengo.Ensemble(nl(N), dimensions=d1)
-    B = nengo.Ensemble(nl(N), dimensions=d2)
+    A = nengo.Ensemble(Neurons(N), dimensions=d1)
+    B = nengo.Ensemble(Neurons(N), dimensions=d2)
     nengo.Connection(
         A, B,
         eval_points=np.random.normal(size=(500, d1)),
@@ -25,12 +25,12 @@ def test_args(nl):
         transform=np.random.normal(size=(d2, d1)))
 
 
-def test_node_to_neurons(Simulator, nl_nodirect):
+def test_node_to_neurons(Simulator, RateSpiking):
     name = 'node_to_neurons'
     N = 30
 
     m = nengo.Model(name, seed=123)
-    a = nengo.Ensemble(nl_nodirect(N), dimensions=1)
+    a = nengo.Ensemble(RateSpiking(N), dimensions=1)
     inn = nengo.Node(output=np.sin)
     inh = nengo.Node(piecewise({0: 0, 2.5: 1}))
     nengo.Connection(inn, a)
@@ -46,7 +46,7 @@ def test_node_to_neurons(Simulator, nl_nodirect):
     ideal = np.sin(t)
     ideal[t >= 2.5] = 0
 
-    with Plotter(Simulator, nl_nodirect) as plt:
+    with Plotter(Simulator, RateSpiking) as plt:
         plt.plot(t, sim.data(inn_p), label='Input')
         plt.plot(t, sim.data(a_p), label='Neuron approx, filter=0.1')
         plt.plot(t, sim.data(inh_p), label='Inhib signal')
@@ -58,13 +58,13 @@ def test_node_to_neurons(Simulator, nl_nodirect):
     assert np.allclose(sim.data(a_p)[-10:], 0, atol=.1, rtol=.01)
 
 
-def test_ensemble_to_neurons(Simulator, nl_nodirect):
+def test_ensemble_to_neurons(Simulator, RateSpiking):
     name = 'ensemble_to_neurons'
     N = 30
 
     m = nengo.Model(name, seed=123)
-    a = nengo.Ensemble(nl_nodirect(N), dimensions=1)
-    b = nengo.Ensemble(nl_nodirect(N), dimensions=1)
+    a = nengo.Ensemble(RateSpiking(N), dimensions=1)
+    b = nengo.Ensemble(RateSpiking(N), dimensions=1)
     inn = nengo.Node(output=np.sin)
     inh = nengo.Node(piecewise({0: 0, 2.5: 1}))
     nengo.Connection(inn, a)
@@ -82,7 +82,7 @@ def test_ensemble_to_neurons(Simulator, nl_nodirect):
     ideal = np.sin(t)
     ideal[t >= 2.5] = 0
 
-    with Plotter(Simulator, nl_nodirect) as plt:
+    with Plotter(Simulator, RateSpiking) as plt:
         plt.plot(t, sim.data(inn_p), label='Input')
         plt.plot(t, sim.data(a_p), label='Neuron approx, pstc=0.1')
         plt.plot(
@@ -97,14 +97,14 @@ def test_ensemble_to_neurons(Simulator, nl_nodirect):
     assert np.allclose(sim.data(b_p)[-10:], 1, atol=.1, rtol=.01)
 
 
-def test_neurons_to_ensemble(Simulator, nl_nodirect):
+def test_neurons_to_ensemble(Simulator, RateSpiking):
     name = 'neurons_to_ensemble'
     N = 20
 
     m = nengo.Model(name, seed=123)
-    a = nengo.Ensemble(nl_nodirect(N * 2), dimensions=2)
-    b = nengo.Ensemble(nl_nodirect(N * 3), dimensions=3)
-    c = nengo.Ensemble(nl_nodirect(N), dimensions=N*2)
+    a = nengo.Ensemble(RateSpiking(N * 2), dimensions=2)
+    b = nengo.Ensemble(RateSpiking(N * 3), dimensions=3)
+    c = nengo.Ensemble(RateSpiking(N), dimensions=N*2)
     nengo.Connection(a.neurons, b, transform=-10 * np.ones((3, N*2)))
     nengo.Connection(a.neurons, c)
 
@@ -116,7 +116,7 @@ def test_neurons_to_ensemble(Simulator, nl_nodirect):
     sim.run(5.0)
     t = sim.trange()
 
-    with Plotter(Simulator, nl_nodirect) as plt:
+    with Plotter(Simulator, RateSpiking) as plt:
         plt.plot(t, sim.data(a_p), label='A')
         plt.plot(t, sim.data(b_p), label='B')
         plt.plot(t, sim.data(c_p), label='C')
@@ -126,12 +126,12 @@ def test_neurons_to_ensemble(Simulator, nl_nodirect):
     assert np.all(sim.data(b_p)[-10:] < 0)
 
 
-def test_neurons_to_node(Simulator, nl_nodirect):
+def test_neurons_to_node(Simulator, RateSpiking):
     name = 'neurons_to_node'
     N = 30
 
     m = nengo.Model(name, seed=123)
-    a = nengo.Ensemble(nl_nodirect(N), dimensions=1)
+    a = nengo.Ensemble(RateSpiking(N), dimensions=1)
     out = nengo.Node(lambda t, x: x, size_in=N)
     nengo.Connection(a.neurons, out, filter=None)
 
@@ -142,7 +142,7 @@ def test_neurons_to_node(Simulator, nl_nodirect):
     sim.run(0.6)
     t = sim.trange()
 
-    with Plotter(Simulator, nl_nodirect) as plt:
+    with Plotter(Simulator, RateSpiking) as plt:
         ax = plt.subplot(111)
         try:
             from nengo.matplotlib import rasterplot
@@ -156,13 +156,13 @@ def test_neurons_to_node(Simulator, nl_nodirect):
     assert np.allclose(sim.data(a_spikes)[:-1], sim.data(out_p)[1:])
 
 
-def test_neurons_to_neurons(Simulator, nl_nodirect):
+def test_neurons_to_neurons(Simulator, RateSpiking):
     name = 'neurons_to_neurons'
     N1, N2 = 30, 50
 
     m = nengo.Model(name, seed=123)
-    a = nengo.Ensemble(nl_nodirect(N1), dimensions=1)
-    b = nengo.Ensemble(nl_nodirect(N2), dimensions=1)
+    a = nengo.Ensemble(RateSpiking(N1), dimensions=1)
+    b = nengo.Ensemble(RateSpiking(N2), dimensions=1)
     inp = nengo.Node(output=1)
     nengo.Connection(inp, a)
     nengo.Connection(a.neurons, b.neurons, transform=-1 * np.ones((N2, N1)))
@@ -175,7 +175,7 @@ def test_neurons_to_neurons(Simulator, nl_nodirect):
     sim.run(5.0)
     t = sim.trange()
 
-    with Plotter(Simulator, nl_nodirect) as plt:
+    with Plotter(Simulator, RateSpiking) as plt:
         plt.plot(t, sim.data(inp_p), label='Input')
         plt.plot(t, sim.data(a_p), label='A, represents input')
         plt.plot(t, sim.data(b_p), label='B, should be 0')
@@ -187,15 +187,15 @@ def test_neurons_to_neurons(Simulator, nl_nodirect):
     assert np.allclose(sim.data(b_p)[-10:], 0, atol=.1, rtol=.01)
 
 
-def test_dimensionality_errors(nl_nodirect):
+def test_dimensionality_errors(RateSpiking):
     nengo.Model("test_dimensionality_error", seed=0)
     N = 10
 
     n01 = nengo.Node(output=[1])
     n02 = nengo.Node(output=[1, 1])
     n21 = nengo.Node(output=[1], size_in=2)
-    e1 = nengo.Ensemble(nl_nodirect(N), 1)
-    e2 = nengo.Ensemble(nl_nodirect(N), 2)
+    e1 = nengo.Ensemble(RateSpiking(N), 1)
+    e2 = nengo.Ensemble(RateSpiking(N), 2)
 
     # these should work
     nengo.Connection(n01, e1)

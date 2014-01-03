@@ -1,5 +1,6 @@
 import collections
 import copy
+import inspect
 import logging
 import numpy as np
 
@@ -12,8 +13,8 @@ logger = logging.getLogger(__name__)
 
 def _in_stack(function):
     """Check whether the given function is in the call stack"""
-    import inspect
-    codes = [record[0].f_code for record in inspect.stack()]
+    stack = inspect.stack()
+    codes = [record[0].f_code for record in stack]
     return function.__code__ in codes
 
 
@@ -136,7 +137,6 @@ class Ensemble(object):
                             "not an int. Defaulting to LIF."))
             _neurons = nengo.LIF(_neurons)
 
-        _neurons.dimensions = self.dimensions
         self._neurons = _neurons
 
     def activities(self, eval_points=None):
@@ -273,9 +273,9 @@ class Node(object):
                     try:
                         rval.__dict__[k] = copy.deepcopy(v, memo)
                     except TypeError:
-                        # XXX some callable things aren't serializable
-                        #     is it worth crashing over?
-                        #     .... we're going to guess not.
+                        logger.warning("Callable output can't be deepcopied. "
+                                       "Shallow copying instead -- "
+                                       "it's probably fine.")
                         rval.__dict__[k] = v
                 else:
                     rval.__dict__[k] = copy.deepcopy(v, memo)
@@ -290,7 +290,6 @@ class Node(object):
         return self._size_out
 
     def probe(self, probe):
-        """TODO"""
         self.probes[probe.attr].append(probe)
         if probe.attr == 'output':
             Connection(self, probe, filter=probe.filter)
@@ -324,7 +323,7 @@ class Connection(object):
     function : callable
         Function to compute using the pre population (pre must be Ensemble).
     probes : dict
-        description TODO
+        description
     transform : array_like, shape (post_size, pre_size)
         Linear transform mapping the pre output to the post input.
     """
@@ -539,7 +538,6 @@ class Probe(object):
 
     @property
     def sample_rate(self):
-        """TODO"""
         return 1.0 / self.sample_every
 
     def add_to_model(self, model):

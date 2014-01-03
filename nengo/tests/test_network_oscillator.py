@@ -10,7 +10,7 @@ from nengo.tests.helpers import Plotter, rmse
 logger = logging.getLogger(__name__)
 
 
-def test_oscillator(Simulator, nl):
+def test_oscillator(Simulator, Neurons):
     model = nengo.Model('Oscillator')
 
     inputs = {0: [1, 0], 0.5: [0, 0]}
@@ -19,10 +19,10 @@ def test_oscillator(Simulator, nl):
     tau = 0.1
     freq = 5
     T = nengo.networks.Oscillator(
-        tau, freq, label="Oscillator", neurons=nl(100))
+        tau, freq, label="Oscillator", neurons=Neurons(100))
     nengo.Connection(input, T.input)
 
-    A = nengo.Ensemble(nl(100), label='A', dimensions=2)
+    A = nengo.Ensemble(Neurons(100), label='A', dimensions=2)
     nengo.Connection(A, A, filter=tau,
                      transform=[[1, -freq*tau], [freq*tau, 1]])
     nengo.Connection(input, A)
@@ -34,7 +34,7 @@ def test_oscillator(Simulator, nl):
     sim = Simulator(model)
     sim.run(3.0)
 
-    with Plotter(Simulator, nl) as plt:
+    with Plotter(Simulator, Neurons) as plt:
         t = sim.trange()
         plt.plot(t, sim.data(A_probe), label='Manual')
         plt.plot(t, sim.data(T_probe), label='Template')

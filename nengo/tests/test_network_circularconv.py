@@ -40,7 +40,7 @@ def test_circularconv_helpers():
     # assert_allclose(self, logger, z0, z1)
 
 
-def test_circularconv(Simulator, nl, dims=4, neurons_per_product=128):
+def test_circularconv(Simulator, Neurons, dims=4, neurons_per_product=128):
     rng = np.random.RandomState(42342)
 
     n_neurons = neurons_per_product
@@ -59,11 +59,11 @@ def test_circularconv(Simulator, nl, dims=4, neurons_per_product=128):
 
     inputA = nengo.Node(output=a)
     inputB = nengo.Node(output=b)
-    A = EnsembleArray(nl(n_neurons), dims, radius=radius)
-    B = EnsembleArray(nl(n_neurons), dims, radius=radius)
-    C = EnsembleArray(nl(n_neurons), dims, radius=radius)
+    A = EnsembleArray(Neurons(n_neurons), dims, radius=radius)
+    B = EnsembleArray(Neurons(n_neurons), dims, radius=radius)
+    C = EnsembleArray(Neurons(n_neurons), dims, radius=radius)
     D = nengo.networks.CircularConvolution(
-        neurons=nl(n_neurons_d),
+        neurons=Neurons(n_neurons_d),
         dimensions=A.dimensions, radius=radius)
 
     nengo.Connection(inputA, A.input)
@@ -87,7 +87,7 @@ def test_circularconv(Simulator, nl, dims=4, neurons_per_product=128):
 
     t = sim.trange()
 
-    with Plotter(Simulator, nl) as plt:
+    with Plotter(Simulator, Neurons) as plt:
         def plot(sim, a, A, title=""):
             a_ref = np.tile(a, (len(t), 1))
             a_sim = sim.data(A_p)
