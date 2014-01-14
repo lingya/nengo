@@ -127,6 +127,10 @@ class Simulator(object):
         # Provide a nicer interface to probe outputs
         self.data = ProbeDict(self._probe_outputs)
 
+    def plot(self, probe, *args, **kwargs):
+        import nengo.matplotlib
+        nengo.matplotlib.plot(self, probe, *args, **kwargs)
+
     def step(self):
         """Advance the simulator by `self.dt` seconds.
         """
