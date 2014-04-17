@@ -11,7 +11,7 @@ import nengo.utils.ensemble
 def test_tuning_curves(dimensions):
     model = nengo.Network(label='test_tuning_curves')
     with model:
-        ens = nengo.Ensemble(nengo.Direct(10), dimensions=dimensions)
+        ens = nengo.Ensemble(10, neuron_type=nengo.Direct(), dimensions=dimensions)
     sim = nengo.Simulator(model)
 
     eval_points, activities = nengo.utils.ensemble.tuning_curves(ens, sim)
