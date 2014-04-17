@@ -17,6 +17,14 @@ def tuning_curves(ens, sim, eval_points=None):
     return eval_points, activities
 
 
+def tuning_curves_along_pref_direction(ens, sim, x=None):
+    if x is None:
+        x = np.linspace(-ens.radius, ens.radius)
+    activities = ens.neurons.rates(
+        x, sim.data[ens.neurons].gain, sim.data[ens.neurons].bias)
+    return x, activities
+
+
 def _similarity(encoders, index, rows, cols=1):
     """Helper function to compute similarity for one encoder.
 
