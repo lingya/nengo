@@ -26,9 +26,9 @@ class DecoderSolverMock(object):
     def __call__(self, A, Y, rng=np.random, E=None):
         self.n_calls += 1
         if E is None:
-            return np.random.rand(A.shape[1], Y.shape[1]), {}
+            return np.random.rand(A.shape[1], Y.shape[1]), {'info': 'value'}
         else:
-            return np.random.rand(A.shape[1], E.shape[2]), {}
+            return np.random.rand(A.shape[1], E.shape[2]), {'info': 'value'}
 
 
 def test_decoder_cache(cache_dir):
