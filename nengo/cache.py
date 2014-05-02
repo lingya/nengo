@@ -2,6 +2,7 @@ import hashlib
 import os
 import os.path
 import struct
+import sys
 
 import numpy as np
 
@@ -58,3 +59,18 @@ class DecoderCache(object):
 
     def _get_path(self, key):
         return os.path.join(self.cache_dir, key + self._FILE_EXTENSION)
+
+
+def disable_caching():
+    global cache_decoder
+    cache_decoder = lambda solver: solver
+
+def enable_caching(cache_dir=os.path.join('~', '.nengo-cache')):
+    global cache_decoder
+    cache_decoder = DecoderCache(os.path.expanduser(cache_dir))
+
+if hasattr(sys, '_called_from_test'):
+    # Disable caching per default in tests to keep them stateless
+    disable_caching()
+else:
+    enable_caching()
