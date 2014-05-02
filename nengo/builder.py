@@ -2,11 +2,13 @@
 
 
 import collections
+import inspect
 import logging
 import warnings
 
 import numpy as np
 
+from nengo.cache import NoDecoderCache
 from nengo.connection import Connection
 from nengo.ensemble import Ensemble, Neurons
 from nengo.learning_rules import BCM, Oja, PES
@@ -849,7 +851,9 @@ class SimOja(Operator):
 class Model(object):
     """Output of the Builder, used by the Simulator."""
 
-    def __init__(self, dt=0.001, label=None):
+    def __init__(
+            self, dt=0.001, label=None, seed=None,
+            decoder_cache=NoDecoderCache()):
         # We want to keep track of the toplevel network
         self.toplevel = None
 
@@ -862,6 +866,10 @@ class Model(object):
 
         self.dt = dt
         self.label = label
+        self.seed = np.random.randint(npext.maxint) if seed is None else seed
+        self.decoder_cache = decoder_cache
+
+        self.rng = np.random.RandomState(self.seed)
 
     def __str__(self):
         return "Model: %s" % self.label
@@ -1257,6 +1265,7 @@ def build_linear_system(conn, model):
 def build_connection(conn, model, config):  # noqa: C901
     # Create random number generator
     rng = np.random.RandomState(model.seeds[conn])
+    decoder_cache = model.decoder_cache
 
     # Get input and output connections from pre and post
     def get_prepost_signal(is_pre):
@@ -1312,13 +1321,15 @@ def build_connection(conn, model, config):  # noqa: C901
             targets = np.dot(targets, transform.T)
             transform = np.array(1., dtype=np.float64)
 
-            decoders, solver_info = conn.solver(
-                activities, targets, rng=rng,
-                E=model.params[conn.post_obj].scaled_encoders.T)
-            model.sig[conn]['out'] = model.sig[conn.post_obj.neurons]['in']
+            decoders, solver_info = decoder_cache.wrap_solver(
+                conn.solver)(
+                    activities, targets, rng=rng,
+                    E=model.params[conn.post_obj].scaled_encoders.T)
+            model.sig[conn]['out'] = model.sig[conn.post_obj]['in']
             signal_size = model.sig[conn]['out'].size
         else:
-            decoders, solver_info = conn.solver(activities, targets, rng=rng)
+            decoders, solver_info = decoder_cache.wrap_solver(conn.solver)(
+                activities, targets, rng=rng)
             signal_size = conn.size_mid
 
         # Add operator for decoders
