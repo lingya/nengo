@@ -6,6 +6,7 @@ import warnings
 
 import numpy as np
 
+from nengo.cache import cache_decoder
 import nengo.decoders
 import nengo.neurons
 import nengo.objects
@@ -1236,13 +1237,14 @@ def build_connection(conn, model, config):  # noqa: C901
             targets = np.dot(targets, transform.T)
             transform = np.array(1., dtype=np.float64)
 
-            decoders, solver_info = conn.solver(
+            decoders, solver_info = cache_decoder(conn.solver)(
                 activities, targets, rng=rng,
                 E=model.params[conn.post].scaled_encoders.T)
             model.sig[conn]['out'] = model.sig[conn.post]['neuron_in']
             signal_size = model.sig[conn]['out'].size
         else:
-            decoders, solver_info = conn.solver(activities, targets, rng=rng)
+            decoders, solver_info = cache_decoder(conn.solver)(
+                activities, targets, rng=rng)
             signal_size = conn.dimensions
 
         # Add operator for decoders and filtering
