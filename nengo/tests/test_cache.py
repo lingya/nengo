@@ -20,15 +20,17 @@ def cache_dir(request):
 class DecoderSolverMock(object):
     def __init__(self, name='solver_mock'):
         self.n_calls = 0
-        self.__module__ = __name__
-        self.__name__ = name
+        self.name = name
 
-    def __call__(self, A, Y, rng=np.random, E=None):
-        self.n_calls += 1
-        if E is None:
-            return np.random.rand(A.shape[1], Y.shape[1]), {'info': 'value'}
-        else:
-            return np.random.rand(A.shape[1], E.shape[2]), {'info': 'value'}
+    def get_solver_fn(self):
+        def solver_fn(A, Y, rng=np.random, E=None):
+            self.n_calls += 1
+            if E is None:
+                return np.random.rand(A.shape[1], Y.shape[1]), {'info': 'v'}
+            else:
+                return np.random.rand(A.shape[1], E.shape[2]), {'info': 'v'}
+        solver_fn.__name__ = self.name
+        return solver_fn
 
 
 def test_decoder_cache(cache_dir):
@@ -42,15 +44,17 @@ def test_decoder_cache(cache_dir):
     rng = np.random.RandomState(42)
 
     cache = DecoderCache(cache_dir)
-    decoders1, solver_info1 = cache(solver_mock)(activities, targets, rng)
+    decoders1, solver_info1 = cache(solver_mock.get_solver_fn())(
+        activities, targets, rng)
     assert solver_mock.n_calls == 1
-    decoders2, solver_info2 = cache(solver_mock)(activities, targets, rng)
+    decoders2, solver_info2 = cache(solver_mock.get_solver_fn())(
+        activities, targets, rng)
     assert solver_mock.n_calls == 1  # check the result is read from cache
     assert_equal(decoders1, decoders2)
     assert solver_info1 == solver_info2
 
     another_solver = DecoderSolverMock('another_solver')
-    cache(another_solver)(activities, targets, rng)
+    cache(another_solver.get_solver_fn())(activities, targets, rng)
     assert another_solver.n_calls == 1
 
     # TODO test using E
