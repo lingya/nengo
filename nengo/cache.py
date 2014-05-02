@@ -37,7 +37,10 @@ class DecoderCache(object):
 
     def _get_cache_key(self, solver, activities, targets, rng, E):
         h = hashlib.sha1()
-        # FIXME hash solver
+
+        h.update(solver.__module__)
+        h.update(solver.__name__)
+
         h.update(activities.data)
         h.update(targets.data)
 

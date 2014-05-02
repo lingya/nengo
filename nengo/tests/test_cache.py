@@ -18,8 +18,10 @@ def cache_dir(request):
 
 
 class DecoderSolverMock(object):
-    def __init__(self):
+    def __init__(self, name='solver_mock'):
         self.n_calls = 0
+        self.__module__ = __name__
+        self.__name__ = name
 
     def __call__(self, A, Y, rng=np.random, E=None):
         self.n_calls += 1
@@ -47,5 +49,8 @@ def test_decoder_cache(cache_dir):
     assert_equal(decoders1, decoders2)
     assert solver_info1 == solver_info2
 
-    # TODO test using different solvers
+    another_solver = DecoderSolverMock('another_solver')
+    cache(another_solver)(activities, targets, rng)
+    assert another_solver.n_calls == 1
+
     # TODO test using E
