@@ -866,7 +866,7 @@ class Builder(object):
         return model
 
 
-def build_network(network, model):  # noqa: C901
+def build_network(network, model, decoder_caching_handler):  # noqa: C901
     """Takes a Network object and returns a Model.
 
     This determines the signals and operators necessary to simulate that model.
