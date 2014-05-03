@@ -8,10 +8,12 @@ from __future__ import print_function
 
 from collections import Mapping
 import logging
+import sys
 
 import numpy as np
 
 from nengo.builder import Model, Builder, SignalDict
+import nengo.cache
 from nengo.utils.graphs import toposort
 from nengo.utils.simulator import operator_depencency_graph
 
@@ -53,7 +55,7 @@ class ProbeDict(Mapping):
 class Simulator(object):
     """Reference simulator for Nengo models."""
 
-    def __init__(self, network, dt=0.001, seed=None, model=None):
+    def __init__(self, network, dt=0.001, seed=None, model=None, caching=None):
         """Initialize the simulator with a network and (optionally) a model.
 
         Most of the time, you will pass in a network and sometimes a dt::
@@ -91,6 +93,11 @@ class Simulator(object):
             if you want to build the network manually, or to inject some
             build artifacts in the Model before building the network,
             then you can pass in a ``nengo.builder.Model`` instance.
+        caching : bool or 'ro' or None
+            Whether to use decoder caching. If 'ro' is passed, the cache will
+            only be read, but no new entries will be written. ``None`` enables
+            the cache only if a network seed is set and the simulator is not
+            created from a unit test.
         """
         self.dt = dt
         if model is None:
@@ -101,8 +108,23 @@ class Simulator(object):
             self.model = model
 
         if network is not None:
+            old_decoder_caching_handler  = network.config[nengo.Connection].decoder_caching_handler
+            if network.config[nengo.Connection].decoder_caching_handler is None:
+                in_test = hasattr(sys, '_called_from_test')
+                network_seed_set = network is not None and \
+                    network.seed is not None
+                network.config[nengo.Connection].decoder_caching_handler = \
+                    nengo.cache.null_decoder_caching_handler
+                if caching:
+                    network.config[nengo.Connection].decoder_caching_handler = \
+                        nengo.cache.DecoderCache(caching == 'ro')
+                elif caching is None and network_seed_set and not in_test:
+                    network.config.decoder_caching_handler = \
+                        nengo.cache.DecoderCache()
             # Build the network into the model
-            Builder.build(network, model=self.model)
+            Builder.build(
+                network, model=self.model)
+            network.config[nengo.Connection].decoder_caching_handler = old_decoder_caching_handler
 
         # Use model seed as simulator seed if the seed is not provided
         # Note: seed is not used right now, but one day...

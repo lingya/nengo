@@ -1,12 +1,13 @@
 """Reference implementation for building a nengo.Network."""
 
 import collections
+import inspect
 import logging
 import warnings
 
 import numpy as np
 
-from nengo.cache import cache_decoder
+from nengo.cache import null_decoder_caching_handler
 import nengo.decoders
 import nengo.neurons
 import nengo.objects
@@ -1166,6 +1167,7 @@ Builder.register_builder(build_probe, nengo.objects.Probe)
 
 def build_connection(conn, model, config):  # noqa: C901
     rng = np.random.RandomState(model.next_seed())
+    decoder_caching_handler = config[Connection].decoder_caching_handler
 
     if isinstance(conn.pre, nengo.objects.Neurons):
         model.sig[conn]['in'] = model.sig[conn.pre.ensemble]["neuron_out"]
@@ -1237,13 +1239,13 @@ def build_connection(conn, model, config):  # noqa: C901
             targets = np.dot(targets, transform.T)
             transform = np.array(1., dtype=np.float64)
 
-            decoders, solver_info = cache_decoder(conn.solver)(
+            decoders, solver_info = decoder_caching_handler(conn.solver)(
                 activities, targets, rng=rng,
                 E=model.params[conn.post].scaled_encoders.T)
             model.sig[conn]['out'] = model.sig[conn.post]['neuron_in']
             signal_size = model.sig[conn]['out'].size
         else:
-            decoders, solver_info = cache_decoder(conn.solver)(
+            decoders, solver_info = decoder_caching_handler(conn.solver)(
                 activities, targets, rng=rng)
             signal_size = conn.dimensions
 

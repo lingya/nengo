@@ -44,7 +44,7 @@ def test_decoder_cache(cache_dir):
     rng = np.random.RandomState(42)
 
     # Basic test, that results are cached.
-    cache = DecoderCache(cache_dir)
+    cache = DecoderCache(cache_dir=cache_dir)
     decoders1, solver_info1 = cache(solver_mock.get_solver_fn())(
         activities, targets, rng)
     assert solver_mock.n_calls == 1
@@ -77,7 +77,7 @@ def test_decoder_cache_with_E_argument_to_solver(cache_dir):
     rng = np.random.RandomState(42)
     E = np.ones((D, N2))
 
-    cache = DecoderCache(cache_dir)
+    cache = DecoderCache(cache_dir=cache_dir)
     decoders1, solver_info1 = cache(solver_mock.get_solver_fn())(
         activities, targets, rng, E=E)
     assert solver_mock.n_calls == 1

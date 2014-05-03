@@ -8,7 +8,6 @@ try:
 except ImportError:
     import pickle
 import struct
-import sys
 import warnings
 
 import numpy as np
@@ -19,8 +18,12 @@ logger = logging.getLogger(__name__)
 class DecoderCache(object):
     _DECODER_EXT = '.npy'
     _SOLVER_INFO_EXT = '.pkl'
+    DEFAULT_DIR = os.path.expanduser(os.path.join('~', '.nengo-cache'))
 
-    def __init__(self, cache_dir):
+    def __init__(self, read_only=False, cache_dir=None):
+        self.read_only = read_only
+        if cache_dir is None:
+            cache_dir = self.DEFAULT_DIR
         self.cache_dir = cache_dir
         if not os.path.exists(self.cache_dir):
             os.mkdir(self.cache_dir)
@@ -65,9 +68,10 @@ class DecoderCache(object):
                 logger.info("Cache miss [{0}].".format(key))
                 decoders, solver_info = solver(
                     activities, targets, rng=rng, E=E)
-                np.save(decoder_path, decoders)
-                with open(solver_info_path, 'wb') as f:
-                    pickle.dump(solver_info, f)
+                if not self.read_only:
+                    np.save(decoder_path, decoders)
+                    with open(solver_info_path, 'wb') as f:
+                        pickle.dump(solver_info, f)
             return decoders, solver_info
         return cached_solver
 
@@ -99,16 +103,5 @@ class DecoderCache(object):
         return os.path.join(self.cache_dir, key + self._SOLVER_INFO_EXT)
 
 
-def disable_caching():
-    global cache_decoder
-    cache_decoder = lambda solver: solver
-
-def enable_caching(cache_dir=os.path.join('~', '.nengo-cache')):
-    global cache_decoder
-    cache_decoder = DecoderCache(os.path.expanduser(cache_dir))
-
-if hasattr(sys, '_called_from_test'):
-    # Disable caching per default in tests to keep them stateless
-    disable_caching()
-else:
-    enable_caching()
+def null_decoder_caching_handler(solver):
+    return solver
