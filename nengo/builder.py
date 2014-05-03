@@ -866,7 +866,7 @@ class Builder(object):
         return model
 
 
-def build_network(network, model, decoder_caching_handler):  # noqa: C901
+def build_network(network, model):  # noqa: C901
     """Takes a Network object and returns a Model.
 
     This determines the signals and operators necessary to simulate that model.
@@ -1167,7 +1167,7 @@ Builder.register_builder(build_probe, nengo.objects.Probe)
 
 def build_connection(conn, model, config):  # noqa: C901
     rng = np.random.RandomState(model.next_seed())
-    decoder_caching_handler = config[Connection].decoder_caching_handler
+    decoder_caching_handler = config[nengo.Connection].decoder_caching_handler
 
     if isinstance(conn.pre, nengo.objects.Neurons):
         model.sig[conn]['in'] = model.sig[conn.pre.ensemble]["neuron_out"]
