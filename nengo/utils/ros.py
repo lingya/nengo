@@ -6,6 +6,11 @@ Common templates for constructing nodes that can communicate through ROS
 from nengo.objects import Node
 import rospy
 
+from nav_msgs.msg import Odometry
+from geometry_msgs.msg import Wrench
+from std_msgs.msg import String
+import json
+
 class RosPubNode( Node ):
   
   def __init__( self, name, topic, dimensions, msg_type, trans_fnc, period=30 ):
@@ -69,7 +74,7 @@ class RosSubNode( Node ):
     self.dimensions = dimensions
     self.topic = topic
 
-    self.output = [0] * dimensions
+    self.rval = [0] * dimensions
     
     self.sub = rospy.Subscriber( topic, msg_type, self.callback )
 
@@ -77,8 +82,52 @@ class RosSubNode( Node ):
                                         size_in=0, size_out=dimensions )
 
   def callback( self, data ):
-    self.output = trans_fnc( data )
+    self.rval = self.trans_fnc( data )
+
+  def tick( self, t ):
+    return self.rval
 
 
-  def tick( self, t, values ):
-    return self.output
+class SemanticCamera( RosSubNode ):
+  """
+  This node is active when specific targets are seen by a semantic camera in
+  MORSE. Each target is represented by one dimension of the output, and a 0.0
+  means the target is not seen by the camera, and a 1.0 means that the target is
+  with the field of view of the camera.
+  """
+  
+  #TODO: add optional weights and transform function for output
+  def __init__( self, name, topic, targets ):
+    """
+    Parameters
+    ----------
+    name : str
+        An arbitrary name for the object
+    topic : str
+        The name of the ROS topic that is being subscribed to
+    targets : list
+        List of str representing the names of the targets the camera is
+        sensitive to
+    """
+
+    self.targets = targets
+    self.dimensions = len( self.targets )
+
+    def fn( data ):
+      rval = [0] * self.dimensions
+      string = data.data
+      #TODO: put in error handling for malformed string
+      str_val = json.loads( string )
+      if len( str_val ) > 0:
+        for i in str_val:
+          if i['name'] in self.targets:
+            rval[self.targets.index(i['name'])] = 1.0
+            break
+      
+      return rval
+
+    self.fn = fn
+
+    super( SemanticCamera, self ).__init__( name=name, topic=topic,
+                                        dimensions=self.dimensions,
+                                        msg_type=String,trans_fnc=self.fn )
