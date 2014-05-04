@@ -74,7 +74,7 @@ class DecoderCache(object):
         return os.path.join(nengo.utils.appdirs.user_cache_dir(
             nengo.version.name, nengo.version.author), 'decoders')
 
-    def __call__(self, solver):
+    def wrap_solver(self, solver):
         def cached_solver(activities, targets, rng=None, E=None):
             args, _, _, defaults = inspect.getargspec(solver)
             args = args[-len(defaults):]
@@ -142,7 +142,7 @@ class DecoderCache(object):
 
 
 class NoDecoderCache(object):
-    def __call__(self, solver):
+    def wrap_solver(self, solver):
         return solver
 
     def get_size(self):
