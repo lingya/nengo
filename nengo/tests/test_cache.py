@@ -19,8 +19,6 @@ def cache_dir(request):
     return d
 
 
-
-
 class SolverMock(object):
     n_calls = {}
 
@@ -149,15 +147,19 @@ class DummyA(object):
     def __init__(self, attr=0):
         self.attr = attr
 
+
 class DummyB(object):
     def __init__(self, attr=0):
         self.attr = attr
 
+
 def dummy_fn_a(arg):
     pass
 
+
 def dummy_fn_b(arg):
     pass
+
 
 @pytest.mark.parametrize('reference, equal, different', (
     (True, True, False),             # bool
