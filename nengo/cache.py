@@ -11,6 +11,7 @@ try:
 except ImportError:
     import pickle
 import struct
+from types import LambdaType
 import warnings
 
 import numpy as np
@@ -53,7 +54,7 @@ class Fingerprint(object):
             self.fingerprint.update(struct.pack('dd', obj.real, obj.imag))
         elif isinstance(obj, bytes):
             self.fingerprint.update(repr(obj))
-        elif isinstance(obj, str):
+        elif isinstance(obj, str) or isinstance(obj, unicode):
             self.fingerprint.update(repr(obj).encode())
         elif isinstance(obj, np.ndarray):
             self.fingerprint.update(obj.data)
@@ -64,6 +65,9 @@ class Fingerprint(object):
         elif isinstance(obj, collections.Iterable):
             for item in obj:
                 self._process(item)
+        elif inspect.isfunction(obj):
+            raise NotImplementedError(
+                "Fingerprinting not supported for {t}.".format(t=type(obj)))
         elif self._is_class_instance(obj):
             self._process(obj.__class__.__module__)
             self._process(obj.__class__.__name__)

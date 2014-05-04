@@ -6,7 +6,7 @@ import numpy as np
 from numpy.testing import assert_equal
 import pytest
 
-from nengo.cache import DecoderCache
+from nengo.cache import DecoderCache, Fingerprint
 
 
 @pytest.fixture(scope='function')
@@ -146,3 +146,44 @@ def test_decoder_cache_with_E_argument_to_solver(cache_dir):
     assert solver_mock.n_calls == 1  # check the result is read from cache
     assert_equal(decoders1, decoders2)
     assert solver_info1 == solver_info2
+
+
+class DummyA(object):
+    def __init__(self, attr=0):
+        self.attr = attr
+
+class DummyB(object):
+    def __init__(self, attr=0):
+        self.attr = attr
+
+def dummy_fn(arg):
+    pass
+
+@pytest.mark.parametrize('reference, equal, different', (
+    (True, True, False),             # bool
+    (False, False, True),            # bool
+    (1, 1, 2),                       # int
+    (1L, 1L, 2L),                    # long
+    (1.0, 1.0, 2.0),                 # float
+    (1.0 + 2.0j, 1 + 2j, 2.0 + 1j),  # complex
+    (b'a', b'a', b'b'),              # bytes
+    ('a', 'a', 'b'),              # string
+    (u'a', u'a', u'b'),              # unicode string
+    (np.eye(2), np.eye(2), np.array([[0, 1], [1, 0]])),      # array
+    ({'a': 1, 'b': 2}, {'b': 2, 'a': 1}, {'a': 2, 'b': 1}),  # dict
+    ((1, 2), (1, 2), (2, 1)),        # tuple
+    ([1, 2], [1, 2], [2, 1]),        # list
+    (DummyA(), DummyA(), DummyB()),  # object instance
+    (DummyA(1), DummyA(1), DummyA(2)),    # object instance
+    (DummyA(1), DummyA(1), DummyA(2)),    # object instance
+))
+def test_fingerprinting(reference, equal, different):
+    assert str(Fingerprint(reference)) == str(Fingerprint(equal))
+    assert str(Fingerprint(reference)) != str(Fingerprint(different))
+
+
+def test_fails_for_functions():
+    # Functions are difficult to handle because they could be lambda
+    # expressions which are hard to tell apart.
+    with pytest.raises(NotImplementedError):
+        Fingerprint(dummy_fn)
