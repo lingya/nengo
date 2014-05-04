@@ -30,6 +30,12 @@ class DecoderCache(object):
         if not os.path.exists(self.cache_dir):
             os.makedirs(self.cache_dir)
 
+    def get_size(self):
+        size = 0
+        for filename in os.listdir(self.cache_dir):
+            size += os.stat(os.path.join(self.cache_dir, filename)).st_size
+        return size
+
     # TODO test this function
     def invalidate(self):
         for filename in os.listdir(self.cache_dir):
