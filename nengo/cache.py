@@ -1,3 +1,5 @@
+"""Caching capabilities for a faster build process."""
+
 import hashlib
 import inspect
 import logging
@@ -19,6 +21,22 @@ logger = logging.getLogger(__name__)
 
 
 class DecoderCache(object):
+    """Cache for decoders.
+
+    Hashes the arguments to the decoder solver and stores the result in a file
+    which will be reused in later calls with the same arguments.
+
+    Parameters
+    ----------
+    read_only : bool
+        Indicates that already existing items in the cache will be used, but no
+        new items will be written to the disk in case of a cache miss.
+    cache_dir : str or None
+        Path to the directory in which the cache will be stored. It will be
+        created if it does not exists. Will use the value returned by
+        :func:`get_default_dir`, if `None`.
+    """
+
     _DECODER_EXT = '.npy'
     _SOLVER_INFO_EXT = '.pkl'
 
@@ -31,12 +49,25 @@ class DecoderCache(object):
             os.makedirs(self.cache_dir)
 
     def get_size(self):
+        """Returns the size of the cache in bytes.
+
+        Returns
+        -------
+        int
+        """
         size = 0
         for filename in os.listdir(self.cache_dir):
             size += os.stat(os.path.join(self.cache_dir, filename)).st_size
         return size
 
     def shrink(self, limit=100):
+        """Reduces the number of cached decoder matrices to meet a limit.
+
+        Parameters
+        ----------
+        limit : int
+            Maximum number of decoder matrices to keep.
+        """
         filelist = []
         for filename in os.listdir(self.cache_dir):
             key, ext = os.path.splitext(filename)
@@ -64,6 +95,7 @@ class DecoderCache(object):
 
     # TODO test this function
     def invalidate(self):
+        """Invalidates the cache (i.e. removes all stored decoder matrices)."""
         for filename in os.listdir(self.cache_dir):
             is_cache_file = filename.endswith(self._DECODER_EXT) or \
                 filename.endswith(self._SOLVER_INFO_EXT)
@@ -72,10 +104,28 @@ class DecoderCache(object):
 
     @classmethod
     def get_default_dir(cls):
+        """Returns the default location of the cache.
+
+        Returns
+        -------
+        str
+        """
         return os.path.join(nengo.utils.appdirs.user_cache_dir(
             nengo.version.name, nengo.version.author), 'decoders')
 
     def wrap_solver(self, solver):
+        """Takes a decoder solver and wraps it to use caching.
+
+        Parameters
+        ----------
+        solver : func
+            Decoder solver to wrap for caching.
+
+        Returns
+        -------
+        func
+            Wrapped decoder solver.
+        """
         def cached_solver(activities, targets, rng=None, E=None):
             args, _, _, defaults = inspect.getargspec(solver)
             args = args[-len(defaults):]
@@ -144,6 +194,9 @@ class DecoderCache(object):
 
 
 class NoDecoderCache(object):
+    """Provides the same interface as :class:`DecoderCache`, but does not
+    perform any caching."""
+
     def wrap_solver(self, solver):
         return solver
 
