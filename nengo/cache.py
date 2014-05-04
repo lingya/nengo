@@ -141,5 +141,15 @@ class DecoderCache(object):
         return os.path.join(self.cache_dir, key + self._SOLVER_INFO_EXT)
 
 
-def null_decoder_caching_handler(solver):
-    return solver
+class NoDecoderCache(object):
+    def __call__(self, solver):
+        return solver
+
+    def get_size(self):
+        return 0
+
+    def shrink(self, limit=0):
+        pass
+
+    def invalidate(self):
+        pass

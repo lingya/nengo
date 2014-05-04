@@ -536,7 +536,6 @@ class Connection(NengoObject):
     modulatory = Parameter(default=False)
     eval_points = Parameter(default=None)
     probeable = Parameter(default=['signal'])
-    decoder_caching_handler = Parameter(default=None)
 
 
     def __init__(self, pre, post, synapse=Default, transform=1.0,

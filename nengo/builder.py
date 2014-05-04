@@ -7,7 +7,7 @@ import warnings
 
 import numpy as np
 
-from nengo.cache import null_decoder_caching_handler
+from nengo.cache import NoDecoderCache
 import nengo.decoders
 import nengo.neurons
 import nengo.objects
@@ -792,7 +792,9 @@ class SimOja(Operator):
 class Model(object):
     """Output of the Builder, used by the Simulator."""
 
-    def __init__(self, dt=0.001, label=None, seed=None):
+    def __init__(
+            self, dt=0.001, label=None, seed=None,
+            decoder_cache=NoDecoderCache()):
         # We want to keep track of the toplevel network
         self.toplevel = None
 
@@ -805,6 +807,7 @@ class Model(object):
         self.dt = dt
         self.label = label
         self.seed = np.random.randint(npext.maxint) if seed is None else seed
+        self.decoder_cache = decoder_cache
 
         self.rng = np.random.RandomState(self.seed)
 
@@ -1167,7 +1170,7 @@ Builder.register_builder(build_probe, nengo.objects.Probe)
 
 def build_connection(conn, model, config):  # noqa: C901
     rng = np.random.RandomState(model.next_seed())
-    decoder_caching_handler = config[nengo.Connection].decoder_caching_handler
+    decoder_cache = model.decoder_cache
 
     if isinstance(conn.pre, nengo.objects.Neurons):
         model.sig[conn]['in'] = model.sig[conn.pre.ensemble]["neuron_out"]
@@ -1239,13 +1242,13 @@ def build_connection(conn, model, config):  # noqa: C901
             targets = np.dot(targets, transform.T)
             transform = np.array(1., dtype=np.float64)
 
-            decoders, solver_info = decoder_caching_handler(conn.solver)(
+            decoders, solver_info = decoder_cache(conn.solver)(
                 activities, targets, rng=rng,
                 E=model.params[conn.post].scaled_encoders.T)
             model.sig[conn]['out'] = model.sig[conn.post]['neuron_in']
             signal_size = model.sig[conn]['out'].size
         else:
-            decoders, solver_info = decoder_caching_handler(conn.solver)(
+            decoders, solver_info = decoder_cache(conn.solver)(
                 activities, targets, rng=rng)
             signal_size = conn.dimensions
 

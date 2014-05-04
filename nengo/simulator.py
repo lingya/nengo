@@ -101,30 +101,27 @@ class Simulator(object):
         """
         self.dt = dt
         if model is None:
+            in_test = hasattr(sys, '_called_from_test')
+            network_seed_set = network is not None and network.seed is not None
+            if caching:
+                decoder_cache = nengo.cache.DecoderCache(caching == 'ro')
+            elif caching is None and network_seed_set and not in_test:
+                decoder_cache = nengo.cache.DecoderCache()
+            else:
+                decoder_cache = nengo.cache.NoDecoderCache()
+
             self.model = Model(dt=self.dt,
                                label="%s, dt=%f" % (network.label, dt),
-                               seed=network.seed)
+                               seed=network.seed, decoder_cache=decoder_cache)
         else:
             self.model = model
 
         if network is not None:
-            old_decoder_caching_handler  = network.config[nengo.Connection].decoder_caching_handler
-            if network.config[nengo.Connection].decoder_caching_handler is None:
-                in_test = hasattr(sys, '_called_from_test')
-                network_seed_set = network is not None and \
-                    network.seed is not None
-                network.config[nengo.Connection].decoder_caching_handler = \
-                    nengo.cache.null_decoder_caching_handler
-                if caching:
-                    network.config[nengo.Connection].decoder_caching_handler = \
-                        nengo.cache.DecoderCache(caching == 'ro')
-                elif caching is None and network_seed_set and not in_test:
-                    network.config.decoder_caching_handler = \
-                        nengo.cache.DecoderCache()
             # Build the network into the model
             Builder.build(
                 network, model=self.model)
-            network.config[nengo.Connection].decoder_caching_handler = old_decoder_caching_handler
+
+        self.model.decoder_cache.shrink()
 
         # Use model seed as simulator seed if the seed is not provided
         # Note: seed is not used right now, but one day...
