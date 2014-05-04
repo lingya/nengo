@@ -1,6 +1,5 @@
 """Caching capabilities for a faster build process."""
 
-import collections
 import hashlib
 import inspect
 import logging
@@ -10,8 +9,6 @@ try:
     import cPickle as pickle
 except ImportError:
     import pickle
-import struct
-from types import LambdaType
 import warnings
 
 import numpy as np
@@ -35,50 +32,16 @@ class Fingerprint(object):
     obj : object
         Object to fingerprint.
     """
+
+    __slots__ = ['fingerprint']
+
     def __init__(self, obj):
         self.fingerprint = hashlib.sha1()
-        self._process(obj)
-
-    def _process(self, obj):
-        if obj is None:
-            self.fingerprint.update(b'None')
-        elif isinstance(obj, bool):
-            self.fingerprint.update(struct.pack('?', obj))
-        elif isinstance(obj, int):
-            self.fingerprint.update(struct.pack('i', obj))
-        elif isinstance(obj, long):
-            self.fingerprint.update(struct.pack('l', obj))
-        elif isinstance(obj, float):
-            self.fingerprint.update(struct.pack('d', obj))
-        elif isinstance(obj, complex):
-            self.fingerprint.update(struct.pack('dd', obj.real, obj.imag))
-        elif isinstance(obj, bytes):
-            self.fingerprint.update(repr(obj))
-        elif isinstance(obj, str) or isinstance(obj, unicode):
-            self.fingerprint.update(repr(obj).encode())
-        elif isinstance(obj, np.ndarray):
-            self.fingerprint.update(obj.data)
-        elif isinstance(obj, collections.Mapping):
-            for k, v in obj.items():
-                self._process(k)
-                self._process(v)
-        elif isinstance(obj, collections.Iterable):
-            for item in obj:
-                self._process(item)
-        elif inspect.isfunction(obj):
-            raise NotImplementedError(
-                "Fingerprinting not supported for {t}.".format(t=type(obj)))
-        elif self._is_class_instance(obj):
-            self._process(obj.__class__.__module__)
-            self._process(obj.__class__.__name__)
-            self._process(obj.__dict__)
-        else:
-            raise NotImplementedError(
-                "Fingerprinting not supported for {t}.".format(t=type(obj)))
-
-    @staticmethod
-    def _is_class_instance(obj):
-        return hasattr(obj, '__class__') and hasattr(obj, '__dict__')
+        try:
+            self.fingerprint.update(pickle.dumps(obj).encode())
+        except pickle.PicklingError as err:
+            raise ValueError("Cannot create fingerprint: {msg}".format(
+                msg=str(err)))
 
     def __str__(self):
         return self.fingerprint.hexdigest()
