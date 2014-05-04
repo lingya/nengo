@@ -14,6 +14,19 @@ class NeuronType(object):
     def gain_bias(self, max_rates, intercepts):
         raise NotImplementedError("Neurons must provide gain_bias")
 
+    def __eq__(self, other):
+        if type(self) != type(other):
+            return False
+
+        if set(self.__dict__.keys()) != set(other.__dict__.keys()):
+            return False
+
+        for k, v in self.__dict__.items():
+            if v != other.__dict__[k]:
+                return False
+
+        return True
+
 
 class Direct(NeuronType):
     """Direct mode. Functions are computed explicitly, instead of in neurons.
