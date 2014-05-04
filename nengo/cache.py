@@ -84,7 +84,8 @@ class DecoderCache(object):
                 break
             excess -= 1
 
-            decoder_path = os.path.join(self.cache_dir, key + self._DECODER_EXT)
+            decoder_path = os.path.join(
+                self.cache_dir, key + self._DECODER_EXT)
             solver_info_path = os.path.join(
                 self.cache_dir, key + self._SOLVER_INFO_EXT)
 
@@ -171,7 +172,8 @@ class DecoderCache(object):
         h.update(activities.data)
         h.update(targets.data)
 
-        # rng format doc: http://docs.scipy.org/doc/numpy/reference/generated/numpy.random.RandomState.get_state.html#numpy.random.RandomState.get_state
+        # rng format doc:
+        # noqa <http://docs.scipy.org/doc/numpy/reference/generated/numpy.random.RandomState.get_state.html#numpy.random.RandomState.get_state>
         state = rng.get_state()
         h.update(state[0].encode())  # string 'MT19937'
         h.update(state[1].data)  # 1-D array of 624 unsigned integer keys

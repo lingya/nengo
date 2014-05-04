@@ -1,7 +1,6 @@
 import os
 import shutil
 import tempfile
-import time
 
 import numpy as np
 from numpy.testing import assert_equal
@@ -13,6 +12,7 @@ from nengo.cache import DecoderCache
 @pytest.fixture(scope='function')
 def cache_dir(request):
     d = tempfile.mkdtemp()
+
     def fin():
         shutil.rmtree(d)
     request.addfinalizer(fin)
