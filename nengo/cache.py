@@ -166,15 +166,15 @@ class DecoderCache(object):
     def _get_cache_key(self, solver, activities, targets, rng, E):
         h = hashlib.sha1()
 
-        h.update(solver.__module__)
-        h.update(solver.__name__)
+        h.update(solver.__module__.encode())
+        h.update(solver.__name__.encode())
 
         h.update(activities.data)
         h.update(targets.data)
 
         # rng format doc: http://docs.scipy.org/doc/numpy/reference/generated/numpy.random.RandomState.get_state.html#numpy.random.RandomState.get_state
         state = rng.get_state()
-        h.update(state[0])  # string 'MT19937'
+        h.update(state[0].encode())  # string 'MT19937'
         h.update(state[1].data)  # 1-D array of 624 unsigned integer keys
         h.update(struct.pack('q', state[2]))  # integer pos
         h.update(struct.pack('q', state[3]))  # integer has_gauss
