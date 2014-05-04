@@ -9,6 +9,7 @@ try:
     import cPickle as pickle
 except ImportError:
     import pickle
+import struct
 import warnings
 
 import numpy as np
@@ -198,8 +199,25 @@ class DecoderCache(object):
         return cached_solver
 
     def _get_cache_key(self, solver, activities, targets, rng, E):
-        return str(Fingerprint((
-            solver, activities, targets, rng.get_state(), E)))
+        h = hashlib.sha1()
+
+        h.update(str(Fingerprint(solver)))
+
+        h.update(activities.data)
+        h.update(targets.data)
+
+        # rng format doc:
+        # noqa <http://docs.scipy.org/doc/numpy/reference/generated/numpy.random.RandomState.get_state.html#numpy.random.RandomState.get_state>
+        state = rng.get_state()
+        h.update(state[0].encode())  # string 'MT19937'
+        h.update(state[1].data)  # 1-D array of 624 unsigned integer keys
+        h.update(struct.pack('q', state[2]))  # integer pos
+        h.update(struct.pack('q', state[3]))  # integer has_gauss
+        h.update(struct.pack('d', state[4]))  # float cached_gaussian
+
+        if E is not None:
+            h.update(E.data)
+        return h.hexdigest()
 
     def _get_decoder_path(self, key):
         return os.path.join(self.cache_dir, key + self._DECODER_EXT)
