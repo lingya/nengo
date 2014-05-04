@@ -20,11 +20,43 @@ import nengo.version
 logger = logging.getLogger(__name__)
 
 
+class Fingerprint(object):
+    """Fingerprint of an object instance.
+
+    A finger print is equal for two instances if and only if they are of the
+    same type and have the same attributes.
+
+    The fingerprint will be used as identification for caching.
+
+    Parameters
+    ----------
+    obj : object
+        Object to fingerprint.
+    """
+
+    __slots__ = ['fingerprint']
+
+    def __init__(self, obj):
+        self.fingerprint = hashlib.sha1()
+        try:
+            self.fingerprint.update(pickle.dumps(obj).encode())
+        except pickle.PicklingError as err:
+            raise ValueError("Cannot create fingerprint: {msg}".format(
+                msg=str(err)))
+
+    def __str__(self):
+        return self.fingerprint.hexdigest()
+
+
 class DecoderCache(object):
     """Cache for decoders.
 
     Hashes the arguments to the decoder solver and stores the result in a file
     which will be reused in later calls with the same arguments.
+
+    Be aware that decoders should not use any global state, but only values
+    passed and attributes of the object instance. Otherwise the wrong solver
+    results might get loaded from the cache.
 
     Parameters
     ----------
@@ -126,7 +158,10 @@ class DecoderCache(object):
             Wrapped decoder solver.
         """
         def cached_solver(activities, targets, rng=None, E=None):
-            args, _, _, defaults = inspect.getargspec(solver)
+            try:
+                args, _, _, defaults = inspect.getargspec(solver)
+            except TypeError:
+                args, _, _, defaults = inspect.getargspec(solver.__call__)
             args = args[-len(defaults):]
             if rng is None and 'rng' in args:
                 rng = defaults[args.index('rng')]
@@ -166,8 +201,7 @@ class DecoderCache(object):
     def _get_cache_key(self, solver, activities, targets, rng, E):
         h = hashlib.sha1()
 
-        h.update(solver.__module__.encode())
-        h.update(solver.__name__.encode())
+        h.update(str(Fingerprint(solver)))
 
         h.update(activities.data)
         h.update(targets.data)
