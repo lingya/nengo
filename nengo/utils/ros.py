@@ -8,6 +8,7 @@ import rospy
 
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Wrench
+from geometry_msgs.msg import Quaternion
 from std_msgs.msg import String
 import json
 
@@ -87,51 +88,6 @@ class RosSubNode( Node ):
   def tick( self, t ):
     return self.rval
 
-
-class SemanticCameraNode( RosSubNode ):
-  """
-  This node is active when specific targets are seen by a semantic camera in
-  MORSE. Each target is represented by one dimension of the output, and a 0.0
-  means the target is not seen by the camera, and a 1.0 means that the target is
-  with the field of view of the camera.
-  """
-  
-  #TODO: add optional weights and transform function for output
-  def __init__( self, name, topic, targets ):
-    """
-    Parameters
-    ----------
-    name : str
-        An arbitrary name for the object
-    topic : str
-        The name of the ROS topic that is being subscribed to
-    targets : list
-        List of str representing the names of the targets the camera is
-        sensitive to
-    """
-
-    self.targets = targets
-    self.dimensions = len( self.targets )
-
-    def fn( data ):
-      rval = [0] * self.dimensions
-      string = data.data
-      #TODO: put in error handling for malformed string
-      str_val = json.loads( string )
-      if len( str_val ) > 0:
-        for i in str_val:
-          if i['name'] in self.targets:
-            rval[self.targets.index(i['name'])] = 1.0
-            break
-      
-      return rval
-
-    self.fn = fn
-
-    super( SemanticCameraNode, self ).__init__( name=name, topic=topic,
-                                                dimensions=self.dimensions,
-                                                msg_type=String, trans_fnc=self.fn )
-
 class ForceTorqueNode( RosPubNode ):
   """
   This node publishes a force and torque
@@ -146,7 +102,7 @@ class ForceTorqueNode( RosPubNode ):
     name : str
         An arbitrary name for the object
     topic : str
-        The name of the ROS topic that is being subscribed to
+        The name of the ROS topic that is being published
     attributes : list
         List of boolean representing the which dimensions of the Wrench message
         are being published. All others will be left as zero.
@@ -157,7 +113,6 @@ class ForceTorqueNode( RosPubNode ):
           [force.x, force.y, force.z, torque.x, torque.y, torque.z]
     """
 
-    #TODO: change this from semantic stuff to forcetorque stuff
     self.attributes = attributes
     self.dimensions = attributes.count( True )
 
@@ -249,14 +204,17 @@ class OdometryNode( RosSubNode ):
       if self.attributes[ 8 ]:
         rval[index] = data.pose.pose.orientation.z
         index += 1
-
       if self.attributes[ 9 ]:
+        rval[index] = data.pose.pose.orientation.w
+        index += 1
+
+      if self.attributes[ 10 ]:
         rval[index] = data.twist.twist.angular.x
         index += 1
-      if self.attributes[ 10 ]:
+      if self.attributes[ 11 ]:
         rval[index] = data.twist.twist.angular.y
         index += 1
-      if self.attributes[ 11 ]:
+      if self.attributes[ 12 ]:
         rval[index] = data.twist.twist.angular.z
         index += 1
       
@@ -267,3 +225,82 @@ class OdometryNode( RosSubNode ):
     super( OdometryNode, self ).__init__( name=name, topic=topic,
                                           dimensions=self.dimensions,
                                           msg_type=Odometry, trans_fnc=self.fn )
+
+class RotorcraftAttitudeNode( RosPubNode ):
+  """
+  This node publishes roll, pitch, yaw, and thrust
+  """
+  
+  #TODO: add optional weights and transform function for input
+  def __init__( self, name, topic ):
+    """
+    Parameters
+    ----------
+    name : str
+        An arbitrary name for the object
+    topic : str
+        The name of the ROS topic that is being published
+    """
+
+    self.dimensions = 4
+
+    def fn( values ):
+      # ROS does not have a message type for rotorcraft attitude, so quaternion
+      # is used because it has the same structure
+      attitude = Quaternion()
+      attitude.x = values[0]
+      attitude.y = values[1]
+      attitude.z = values[2]
+      attitude.w = values[3]
+      return attitude
+
+    self.fn = fn
+
+    super( RotorcraftAttitudeNode, self ).__init__( name=name, topic=topic,
+                                                    dimensions=self.dimensions,
+                                                    msg_type=Quaternion, 
+                                                    trans_fnc=self.fn )
+
+class SemanticCameraNode( RosSubNode ):
+  """
+  This node is active when specific targets are seen by a semantic camera in
+  MORSE. Each target is represented by one dimension of the output, and a 0.0
+  means the target is not seen by the camera, and a 1.0 means that the target is
+  with the field of view of the camera.
+  """
+  
+  #TODO: add optional weights and transform function for output
+  def __init__( self, name, topic, targets ):
+    """
+    Parameters
+    ----------
+    name : str
+        An arbitrary name for the object
+    topic : str
+        The name of the ROS topic that is being subscribed to
+    targets : list
+        List of str representing the names of the targets the camera is
+        sensitive to
+    """
+
+    self.targets = targets
+    self.dimensions = len( self.targets )
+
+    def fn( data ):
+      rval = [0] * self.dimensions
+      string = data.data
+      #TODO: put in error handling for malformed string
+      str_val = json.loads( string )
+      if len( str_val ) > 0:
+        for i in str_val:
+          if i['name'] in self.targets:
+            rval[self.targets.index(i['name'])] = 1.0
+            break
+      
+      return rval
+
+    self.fn = fn
+
+    super( SemanticCameraNode, self ).__init__( name=name, topic=topic,
+                                                dimensions=self.dimensions,
+                                                msg_type=String, trans_fnc=self.fn )
