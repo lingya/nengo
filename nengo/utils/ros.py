@@ -48,7 +48,7 @@ class RosPubNode( Node ):
     self.counter += 1
     if self.counter >= self.publishing_period:
       self.counter = 0
-      msg = trans_fnc( values )
+      msg = self.trans_fnc( values )
       self.pub.publish( msg )
 
 class RosSubNode( Node ):
@@ -88,7 +88,7 @@ class RosSubNode( Node ):
     return self.rval
 
 
-class SemanticCamera( RosSubNode ):
+class SemanticCameraNode( RosSubNode ):
   """
   This node is active when specific targets are seen by a semantic camera in
   MORSE. Each target is represented by one dimension of the output, and a 0.0
@@ -128,6 +128,142 @@ class SemanticCamera( RosSubNode ):
 
     self.fn = fn
 
-    super( SemanticCamera, self ).__init__( name=name, topic=topic,
-                                        dimensions=self.dimensions,
-                                        msg_type=String,trans_fnc=self.fn )
+    super( SemanticCameraNode, self ).__init__( name=name, topic=topic,
+                                                dimensions=self.dimensions,
+                                                msg_type=String, trans_fnc=self.fn )
+
+class ForceTorqueNode( RosPubNode ):
+  """
+  This node publishes a force and torque
+  """
+  
+  #TODO: add optional weights and transform function for input
+  def __init__( self, name, topic, 
+                attributes=[True, True, True, True, True, True] ):
+    """
+    Parameters
+    ----------
+    name : str
+        An arbitrary name for the object
+    topic : str
+        The name of the ROS topic that is being subscribed to
+    attributes : list
+        List of boolean representing the which dimensions of the Wrench message
+        are being published. All others will be left as zero.
+        For Example, [True, False, False, False, False, True] will publish the
+        the force in the x direction, as well as the torque in the z direction.
+        Since only two fields of the message are being used, the node will have
+        only two dimensions. The format is:
+          [force.x, force.y, force.z, torque.x, torque.y, torque.z]
+    """
+
+    #TODO: change this from semantic stuff to forcetorque stuff
+    self.attributes = attributes
+    self.dimensions = attributes.count( True )
+
+    def fn( values ):
+      wrench = Wrench()
+      index = 0
+      if self.attributes[0]:
+        wrench.force.x = values[index]
+        index += 1
+      if self.attributes[1]:
+        wrench.force.y = values[index]
+        index += 1
+      if self.attributes[2]:
+        wrench.force.z = values[index]
+        index += 1
+      if self.attributes[3]:
+        wrench.torque.x = values[index]
+        index += 1
+      if self.attributes[4]:
+        wrench.torque.y = values[index]
+        index += 1
+      if self.attributes[5]:
+        wrench.torque.z = values[index]
+        index += 1
+      return wrench
+
+    self.fn = fn
+
+    super( ForceTorqueNode, self ).__init__( name=name, topic=topic,
+                                             dimensions=self.dimensions,
+                                             msg_type=Wrench, trans_fnc=self.fn )
+
+class OdometryNode( RosSubNode ):
+  """
+  This node reads odometry data
+  """
+  
+  #TODO: add optional weights and transform function for output
+  #TODO: need to come up with a better way of specifying 'attributes' as well as
+  #      a better name for this parameter
+  def __init__( self, name, topic, attributes ):
+    """
+    Parameters
+    ----------
+    name : str
+        An arbitrary name for the object
+    topic : str
+        The name of the ROS topic that is being subscribed to
+    attributes : list
+        List of boolean representing the which dimensions of the Odometry message
+        are being published. All others will be left as zero.
+    """
+
+    self.attributes = attributes
+    self.dimensions = attributes.count( True )
+
+    def fn( data ):
+      rval = [0] * self.dimensions
+
+      index = 0
+
+      if self.attributes[ 0 ]:
+        rval[index] = data.pose.pose.position.x
+        index += 1
+      if self.attributes[ 1 ]:
+        rval[index] = data.pose.pose.position.y
+        index += 1
+      if self.attributes[ 2 ]:
+        rval[index] = data.pose.pose.position.z
+        index += 1
+
+      if self.attributes[ 3 ]:
+        rval[index] = data.twist.twist.linear.x
+        index += 1
+      if self.attributes[ 4 ]:
+        rval[index] = data.twist.twist.linear.y
+        index += 1
+      if self.attributes[ 5 ]:
+        rval[index] = data.twist.twist.linear.z
+        index += 1
+
+      # FIXME: ROS outputs orientation in quaternions, need to account for this
+      if self.attributes[ 6 ]:
+        rval[index] = data.pose.pose.orientation.x
+        index += 1
+      if self.attributes[ 7 ]:
+        rval[index] = data.pose.pose.orientation.y
+        index += 1
+      if self.attributes[ 8 ]:
+        rval[index] = data.pose.pose.orientation.z
+        index += 1
+
+      if self.attributes[ 9 ]:
+        rval[index] = data.twist.twist.angular.x
+        index += 1
+      if self.attributes[ 10 ]:
+        rval[index] = data.twist.twist.angular.y
+        index += 1
+      if self.attributes[ 11 ]:
+        rval[index] = data.twist.twist.angular.z
+        index += 1
+      
+      return rval
+
+    self.fn = fn
+
+    super( OdometryNode, self ).__init__( name=name, topic=topic,
+                                          dimensions=self.dimensions,
+                                          msg_type=Odometry, trans_fnc=self.fn )
