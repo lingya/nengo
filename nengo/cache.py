@@ -8,6 +8,7 @@ import struct
 
 import numpy as np
 
+import nengo.runcom
 import nengo.utils.appdirs
 import nengo.version
 from nengo.utils.compat import pickle, PY2
@@ -139,8 +140,7 @@ class DecoderCache(object):
         -------
         str
         """
-        return os.path.join(nengo.utils.appdirs.user_cache_dir(
-            nengo.version.name, nengo.version.author), 'decoders')
+        return nengo.runcom.runcom.get('decoder_cache', 'path')
 
     def wrap_solver(self, solver):
         """Takes a decoder solver and wraps it to use caching.
