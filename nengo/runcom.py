@@ -23,6 +23,7 @@ DEFAULTS = {
 # TODO installation wide file.
 DEFAULT_RC_FILES = [
     os.path.join(_APPDIRS.user_data_dir, 'nengorc'),
+    os.environ['NENGORC'] if 'NENGORC' in os.environ else '',
     os.path.join(os.curdir, 'nengorc')
 ]
 
