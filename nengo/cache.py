@@ -91,14 +91,17 @@ class DecoderCache(object):
             size += os.stat(os.path.join(self.cache_dir, filename)).st_size
         return size
 
-    def shrink(self, limit=100):
-        """Reduces the number of cached decoder matrices to meet a limit.
+    def shrink(self, limit=None):
+        """Reduces the size of the cache to meet a limit.
 
         Parameters
         ----------
-        limit : int
-            Maximum number of decoder matrices to keep.
+        limit : int, optional
+            Maximum size of the cache in bytes.
         """
+        if limit is None:
+            limit = nengo.runcom.runcom.getint('decoder_cache', 'size')
+
         filelist = []
         for filename in os.listdir(self.cache_dir):
             key, ext = os.path.splitext(filename)
@@ -109,19 +112,20 @@ class DecoderCache(object):
             filelist.append((stat.st_atime, key))
         filelist.sort()
 
-        excess = len(filelist) - limit
+        excess = self.get_size() - limit
         for _, key in filelist:
             if excess <= 0:
                 break
-            excess -= 1
 
             decoder_path = os.path.join(
                 self.cache_dir, key + self._DECODER_EXT)
             solver_info_path = os.path.join(
                 self.cache_dir, key + self._SOLVER_INFO_EXT)
 
+            excess -= os.stat(decoder_path).st_size
             os.unlink(decoder_path)
             if os.path.exists(solver_info_path):
+                excess -= os.stat(solver_info_path).st_size
                 os.unlink(solver_info_path)
 
     def invalidate(self):
