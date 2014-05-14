@@ -1,15 +1,11 @@
 import pytest
 import nengo
-import sys
+import nengo.runcom
 
 
 def pytest_configure(config):
-    sys._called_from_test = True
-
-
-def pytest_unconfigure(config):
-    if hasattr(sys, '_called_from_test'):
-        del sys._called_from_test
+    nengo.runcom.runcom.reload_rc([])
+    nengo.runcom.runcom.set('decoder_cache', 'enabled', 'false')
 
 
 def pytest_funcarg__Simulator(request):
