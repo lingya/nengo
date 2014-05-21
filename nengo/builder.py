@@ -462,11 +462,7 @@ class Operator(object):
         """
         for sig in self.all_signals:
             if sig.base not in signals:
-                signals.init(sig.base,
-                             np.asarray(
-                                 np.zeros(sig.base.shape,
-                                          dtype=sig.base.dtype)
-                                 + sig.base.value))
+                signals.init(sig.base, np.asarray(sig.base.value))
 
 
 class Reset(Operator):
