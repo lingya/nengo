@@ -51,6 +51,37 @@ def cholesky(A, y, sigma, transpose=None):
     return x, info
 
 
+def _random_svd(A, k, rng=None):
+    m, n = A.shape
+    # if n > k:
+    #     return np.linalg.svd(A, full_matrices=False)
+
+    rng = np.random if rng is None else rng
+    omega = rng.normal(size=(n, k))
+    Y = np.dot(A, omega)
+    Q, _ = np.linalg.qr(Y)
+    B = np.dot(Q.T, A)
+    U, s, V = np.linalg.svd(B, full_matrices=False)
+    U = np.dot(Q, U)
+    return U, s, V
+
+
+def svd(A, y, sigma, transpose=None, rng=None):
+    assert np.asarray(sigma).size == 1, "Scalar sigma only"
+    m, n = A.shape
+
+    # U, s, V = np.linalg.svd(A, full_matrices=False)
+    # U, s, V = _random_svd(A, 500, rng=rng)
+    # U, s, V = _random_svd(A, 100, rng=rng)
+
+    from sklearn.utils.extmath import randomized_svd
+    # U, s, V = randomized_svd(A, n, n_iter=3)
+    U, s, V = randomized_svd(A, 100, n_iter=3)
+    x = np.dot(V.T, (s / (s**2 + m * sigma**2))[:,None] * np.dot(U.T, y))
+    info = {'rmses': npext.rms(y - np.dot(A, x), axis=0)}
+    return x, info
+
+
 def conjgrad_scipy(A, Y, sigma, tol=1e-4):
     """Solve the least-squares system using Scipy's conjugate gradient."""
     import scipy.sparse.linalg

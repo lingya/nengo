@@ -14,7 +14,7 @@ from nengo.utils.distributions import UniformHypersphere
 from nengo.utils.numpy import filtfilt, rms, norm
 from nengo.utils.testing import Plotter, allclose, Timer
 from nengo.decoders import (
-    cholesky, conjgrad, block_conjgrad, conjgrad_scipy, lsmr_scipy,
+    cholesky, svd, conjgrad, block_conjgrad, conjgrad_scipy, lsmr_scipy,
     Lstsq, LstsqNoise, LstsqL2, LstsqL2nz,
     LstsqL1, LstsqDrop,
     Nnls, NnlsL2, NnlsL2nz)
@@ -59,6 +59,26 @@ def test_cholesky():
     x2, _ = cholesky(A, b, 0, transpose=True)
     assert np.allclose(x0, x1)
     assert np.allclose(x0, x2)
+
+
+def test_svd():
+    rng = np.random.RandomState(4829)
+    # A, b = get_system(500, 100, 5, rng=rng)
+    # A, b = get_system(5000, 2000, 50, rng=rng)
+    # A, b = get_system(8000, 5000, 50, rng=rng)
+    A, b = get_system(2000, 1000, 5, rng=rng)
+    sigma = 0.1 * A.max()
+
+    with Timer() as t0:
+        x0, _ = cholesky(A, b, sigma)
+    with Timer() as t1:
+        x1, _ = block_conjgrad(A, b, sigma, tol=1e-3)
+    with Timer() as t2:
+        x2, _ = svd(A, b, sigma, rng)
+
+    print(t0.duration, t1.duration, t2.duration)
+    assert np.allclose(x0, x1, atol=1e-6, rtol=1e-3)
+    assert np.allclose(x0, x2, atol=1e-6, rtol=1e-3)
 
 
 def test_conjgrad():
