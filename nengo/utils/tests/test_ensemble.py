@@ -32,3 +32,8 @@ def test_tuning_curves_along_pref_direction():
     assert np.all(-1.5 <= x) and np.all(x <= 1.5)
     # eval_points is passed through in direct mode neurons
     assert_equal(x, activities)
+
+
+if __name__ == '__main__':
+    nengo.log(debug=True)
+    pytest.main([__file__, '-v'])
