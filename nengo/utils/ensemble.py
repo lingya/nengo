@@ -4,6 +4,31 @@ import nengo.utils.numpy as npext
 
 
 def tuning_curves(ens, sim, inputs=None, apply_encoders=False):
+    """Calculates the tuning curves of an ensemble.
+
+    Parameters
+    ----------
+    ens : nengo.Ensemble
+        Ensemble to calculate the tuning curves of.
+    sim : nengo.Simulator
+        Simulator providing information about the build ensemble. (An unbuild
+        ensemble does not have tuning curves assigned to it.)
+    inputs : ndarray, optional
+        Input points at which the tuning curves will be evaluated. Will be
+        automatically chosen if ``None``.
+    apply_encoders : boolean, optional
+        If ``True``, the (unscaled, i.e. the radius will be ignored) encoders
+        will be applied to the inputs. Otherwise it is assumed that the input
+        is already encoded.
+
+    Returns
+    -------
+    inputs : ndarray
+        The passed or auto-generated `inputs`.
+    activities : ndarray
+        The activities of the individual neurons given the `inputs`.
+    """
+
     if inputs is None:
         inputs = np.array(sim.data[ens].eval_points) if apply_encoders \
             else np.linspace(-1.0, 1.0)
