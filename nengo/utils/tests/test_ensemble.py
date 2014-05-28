@@ -7,6 +7,7 @@ import pytest
 import nengo
 import nengo.utils.ensemble
 from nengo.utils.distributions import Uniform
+from nengo.utils.testing import Plotter
 
 
 @pytest.mark.parametrize('dimensions', [1, 2])
@@ -18,6 +19,13 @@ def test_tuning_curves_direct_mode(Simulator, dimensions):
 
     eval_points, activities = nengo.utils.ensemble.tuning_curves(
         ens, sim, apply_encoders=True)
+
+    with Plotter(Simulator) as plt:
+        plt.plot(eval_points, activities)
+        plt.savefig('utils.test_ensemble.test_tuning_curves_direct_mode_%d.pdf'
+                    % dimensions)
+        plt.close()
+
     # eval_points is passed through in direct mode neurons
     assert_equal(eval_points, activities)
 
@@ -34,6 +42,13 @@ def test_tuning_curves_normal_mode(Simulator, dimensions):
 
     eval_points, activities = nengo.utils.ensemble.tuning_curves(
         ens, sim, apply_encoders=True)
+
+    with Plotter(Simulator) as plt:
+        plt.plot(eval_points, activities)
+        plt.savefig('utils.test_ensemble.test_tuning_curves_normal_mode_%d.pdf'
+                    % dimensions)
+        plt.close()
+
     assert np.all(activities >= 0)
     assert np.all(activities <= max_rate)
 
@@ -46,6 +61,13 @@ def test_tuning_curves_along_pref_direction_direct_mode(Simulator):
 
     x, activities = nengo.utils.ensemble.tuning_curves(
         ens, sim, apply_encoders=False)
+
+    with Plotter(Simulator) as plt:
+        plt.plot(x, activities)
+        plt.savefig('utils.test_ensemble.test_tuning_curves_along_pref_'
+                    'direction_direct_mode.pdf')
+        plt.close()
+
     assert x.ndim == 1 and x.size > 0
     assert np.all(-1.0 <= x) and np.all(x <= 1.0)
     # eval_points is passed through in direct mode neurons
@@ -63,6 +85,12 @@ def test_tuning_curves_along_pref_direction_normal_mode(Simulator):
 
     x, activities = nengo.utils.ensemble.tuning_curves(
         ens, sim, apply_encoders=False)
+
+    with Plotter(Simulator) as plt:
+        plt.plot(x, activities)
+        plt.savefig('utils.test_ensemble.test_tuning_curves_along_pref_'
+                    'direction_normal_mode.pdf')
+        plt.close()
 
     assert x.ndim == 1 and x.size > 0
     assert np.all(-1.0 <= x) and np.all(x <= 1.0)
