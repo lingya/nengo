@@ -1,28 +1,20 @@
 from __future__ import absolute_import
-
 import numpy as np
-
-from nengo.utils.compat import range
 import nengo.utils.numpy as npext
 
 
-def tuning_curves(ens, sim, eval_points=None):
-    if eval_points is None:
-        eval_points = np.array(sim.data[ens].eval_points)
-        eval_points.sort(axis=0)
+def tuning_curves(ens, sim, inputs=None, apply_encoders=False):
+    if inputs is None:
+        inputs = np.array(sim.data[ens].eval_points) if apply_encoders \
+            else np.linspace(-1.0, 1.0)
+        # Sort inputs for easier plotting
+        inputs = inputs[np.lexsort(np.atleast_2d(inputs).T[::-1]), ...]
+
+    x = np.dot(inputs, sim.data[ens].encoders.T) if apply_encoders else inputs
 
     activities = ens.neuron_type.rates(
-        np.dot(eval_points, sim.data[ens].encoders.T),
-        sim.data[ens].gain, sim.data[ens].bias)
-    return eval_points, activities
-
-
-def tuning_curves_along_pref_direction(ens, sim, x=None):
-    if x is None:
-        x = np.linspace(-ens.radius, ens.radius)
-    activities = ens.neurons.rates(
-        x, sim.data[ens.neurons].gain, sim.data[ens.neurons].bias)
-    return x, activities
+        x, sim.data[ens].gain, sim.data[ens].bias)
+    return inputs, activities
 
 
 def _similarity(encoders, index, rows, cols=1):
