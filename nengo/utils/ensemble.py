@@ -13,9 +13,8 @@ def tuning_curves(ens, sim, inputs=None, apply_encoders=False):
     sim : nengo.Simulator
         Simulator providing information about the build ensemble. (An unbuild
         ensemble does not have tuning curves assigned to it.)
-    inputs : ndarray, optional
-        Input points at which the tuning curves will be evaluated. Will be
-        automatically chosen if ``None``.
+    inputs : TODO
+        TODO
     apply_encoders : boolean, optional
         If ``True``, the (unscaled, i.e. the radius will be ignored) encoders
         will be applied to the inputs. Otherwise it is assumed that the input
@@ -23,22 +22,36 @@ def tuning_curves(ens, sim, inputs=None, apply_encoders=False):
 
     Returns
     -------
-    inputs : ndarray
+    inputs : TODO
         The passed or auto-generated `inputs`.
     activities : ndarray
+        TODO
         The activities of the individual neurons given the `inputs`.
     """
 
     if inputs is None:
-        inputs = np.array(sim.data[ens].eval_points) if apply_encoders \
-            else np.linspace(-1.0, 1.0)
-        # Sort inputs for easier plotting
-        inputs = inputs[np.lexsort(np.atleast_2d(inputs).T[::-1]), ...]
+        inputs = np.linspace(-1.0, 1.0)
+        if apply_encoders:
+            if ens.dimensions > 1:
+                inputs = np.meshgrid(
+                    *(ens.dimensions * [inputs]), indexing='ij')
+            else:
+                inputs = [inputs]
 
-    x = np.dot(inputs, sim.data[ens].encoders.T) if apply_encoders else inputs
+    if apply_encoders:
+        flattened = np.column_stack([i.flat for i in inputs])
+        x = np.dot(flattened, sim.data[ens].encoders.T)
+    else:
+        x = np.atleast_2d(inputs).T
 
     activities = ens.neuron_type.rates(
         x, sim.data[ens].gain, sim.data[ens].bias)
+
+    if apply_encoders:
+        activities = np.reshape(activities.T, (-1,) + inputs[0].shape)
+    else:
+        activities = np.squeeze(activities)
+
     return inputs, activities
 
 
