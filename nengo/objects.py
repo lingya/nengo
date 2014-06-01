@@ -757,7 +757,8 @@ class Probe(NengoObject):
     a connection in order to do things like filtering.
     """
 
-    def __init__(self, target, attr=None, sample_every=None, **conn_args):
+    def __init__(self, target, attr=None, sample_every=None,
+                 seed=None, **conn_args):
         if not hasattr(target, 'probeable') or len(target.probeable) == 0:
             raise TypeError(
                 "Type '%s' is not probeable" % target.__class__.__name__)
@@ -774,6 +775,7 @@ class Probe(NengoObject):
         self.target = target
         self.label = "Probe(%s.%s)" % (target.label, self.attr)
         self.sample_every = sample_every
+        self.seed = seed
         self.conn_args = conn_args
 
     @property

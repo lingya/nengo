@@ -837,7 +837,7 @@ class Model(object):
 
             self.seeds[obj] = rng.randint(npext.maxint)
 
-            if hasattr(obj, 'seed') and isinstance(obj.seed, (int, long)):
+            if hasattr(obj, 'seed') and obj.seed is not None:
                 self.seeds[obj] = obj.seed
 
             if isinstance(obj, nengo.Network):
@@ -1194,6 +1194,8 @@ def build_probe(probe, model, config):
         model.sig[probe]['in'] = Signal(np.zeros(conn.dimensions),
                                         name=probe.label)
         model.add_op(Reset(model.sig[probe]['in']))
+        # Set connection's seed to probe's (which isn't used elsewhere)
+        model.seeds[conn] = model.seeds[probe]
         # Build the connection
         Builder.build(conn, model=model, config=config)
 
