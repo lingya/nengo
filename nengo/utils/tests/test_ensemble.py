@@ -11,17 +11,18 @@ from nengo.utils.distributions import Uniform
 from nengo.utils.testing import Plotter
 
 
-def plot_tuning_curves(plt, filename, eval_points, activities):
-    if len(eval_points) == 1:
-        plt.plot(eval_points[0], activities.T)
-    elif len(eval_points) == 2:
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-        ax.plot_surface(eval_points[0], eval_points[1], activities[0])
-    else:
-        raise NotImplementedError()
-    plt.savefig(filename)
-    plt.close()
+def plot_tuning_curves(Simulator, filename, eval_points, activities):
+    with Plotter(Simulator) as plt:
+        if len(eval_points) == 1:
+            plt.plot(eval_points[0], activities.T)
+        elif len(eval_points) == 2:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+            ax.plot_surface(eval_points[0], eval_points[1], activities[0])
+        else:
+            raise NotImplementedError()
+        plt.savefig(filename)
+        plt.close()
 
 
 @pytest.mark.parametrize('dimensions', [1, 2])
@@ -33,12 +34,11 @@ def test_tuning_curves(Simulator, dimensions):
 
     eval_points, activities = nengo.utils.ensemble.tuning_curves(ens, sim)
 
-    with Plotter(Simulator) as plt:
-        plot_tuning_curves(
-            plt,
-            'utils.test_ensemble.test_tuning_curves_direct_mode_%d.pdf'
-            % dimensions,
-            eval_points, activities)
+    plot_tuning_curves(
+        Simulator,
+        'utils.test_ensemble.test_tuning_curves_direct_mode_%d.pdf'
+        % dimensions,
+        eval_points, activities)
 
     # eval_points is passed through in direct mode neurons
     assert_equal(eval_points, activities)
@@ -56,12 +56,11 @@ def test_tuning_curves_normal_mode(Simulator, dimensions):
 
     eval_points, activities = nengo.utils.ensemble.tuning_curves(ens, sim)
 
-    with Plotter(Simulator) as plt:
-        plot_tuning_curves(
-            plt,
-            'utils.test_ensemble.test_tuning_curves_normal_mode_%d.pdf'
-            % dimensions,
-            eval_points, activities)
+    plot_tuning_curves(
+        Simulator,
+        'utils.test_ensemble.test_tuning_curves_normal_mode_%d.pdf'
+        % dimensions,
+        eval_points, activities)
 
     assert np.all(activities >= 0)
     # Activity might be larger than max_rate as evaluation points will be taken
