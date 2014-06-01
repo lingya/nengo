@@ -85,7 +85,7 @@ def tuning_curves(ens, sim, inputs=None):
     if inputs is None:
         inputs = np.linspace(-1.0, 1.0)
         if ens.dimensions > 1:
-            inputs = np.meshgrid(*(ens.dimensions * [inputs]), indexing='ij')
+            inputs = npext.meshgrid_nd(*(ens.dimensions * [inputs]))
         else:
             inputs = [inputs]
 
