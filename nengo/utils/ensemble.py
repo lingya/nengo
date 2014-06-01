@@ -3,6 +3,17 @@ import numpy as np
 import nengo.utils.numpy as npext
 
 
+def tuning_curves_1d(ens, sim, inputs=None):
+    if ens.dimensions != 1:
+        raise ValueError("Ensemble dimensionality != 1.")
+
+    if inputs is not None:
+        inputs = [inputs]
+    inputs, activities = tuning_curves(ens, sim, inputs)
+    assert len(inputs) == 1
+    return inputs[0], activities.T
+
+
 def tuning_curves(ens, sim, inputs=None):
     """Calculates the tuning curves of an ensemble.
 

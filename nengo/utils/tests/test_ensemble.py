@@ -25,6 +25,23 @@ def plot_tuning_curves(Simulator, filename, eval_points, activities):
         plt.close()
 
 
+def test_tuning_curves_1d(Simulator):
+    model = nengo.Network(label='test_tuning_curves_1d', seed=1)
+    with model:
+        ens_1d = nengo.Ensemble(nengo.LIF(10), dimensions=1)
+        ens_2d = nengo.Ensemble(nengo.LIF(10), dimensions=2)
+    sim = Simulator(model)
+
+    with pytest.raises(ValueError):
+        inputs, activities = nengo.utils.ensemble.tuning_curves_1d(ens_2d, sim)
+
+    # Should allow to pass returned value directly to plotting function
+    with Plotter(Simulator) as plt:
+        plt.plot(*nengo.utils.ensemble.tuning_curves_1d(ens_1d, sim))
+        plt.savefig('utils.test_ensemble.test_tuning_curves_1d.pdf')
+        plt.close()
+
+
 @pytest.mark.parametrize('dimensions', [1, 2])
 def test_tuning_curves(Simulator, dimensions):
     model = nengo.Network(label='test_tuning_curves_direct', seed=4)
