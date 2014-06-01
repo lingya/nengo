@@ -127,6 +127,8 @@ def test_tuning_curves_along_pref_direction_normal_mode(Simulator):
 
     assert np.all(activities >= 0.0)
     assert np.all(activities <= max_rate)
+    # Activities along preferred direction must increase monotonically.
+    assert np.all(np.diff(activities, axis=0) >= 0.0)
 
 
 if __name__ == '__main__':
