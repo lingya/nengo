@@ -12,7 +12,6 @@ from nengo.utils.testing import Plotter
 
 
 def plot_tuning_curves(plt, filename, eval_points, activities):
-    print eval_points[0].shape, activities.shape
     if len(eval_points) == 1:
         plt.plot(eval_points[0], activities.T)
     elif len(eval_points) == 2:
@@ -26,7 +25,7 @@ def plot_tuning_curves(plt, filename, eval_points, activities):
 
 
 @pytest.mark.parametrize('dimensions', [1, 2])
-def test_tuning_curves_direct_mode(Simulator, dimensions):
+def test_tuning_curves(Simulator, dimensions):
     model = nengo.Network(label='test_tuning_curves_direct', seed=4)
     with model:
         ens = nengo.Ensemble(10, neuron_type=nengo.Direct(), dimensions=dimensions)
@@ -104,7 +103,6 @@ def test_tuning_curves_along_pref_direction_normal_mode(Simulator):
 
     x, activities = nengo.utils.ensemble.tuning_curves(
         ens, sim, apply_encoders=False)
-    print x.shape, activities.shape
 
     with Plotter(Simulator) as plt:
         plt.plot(x, activities)
