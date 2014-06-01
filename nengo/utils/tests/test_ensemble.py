@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import numpy as np
 from numpy.testing import assert_equal
-from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d import Axes3D  # noqa
 import pytest
 
 import nengo
