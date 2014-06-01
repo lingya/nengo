@@ -31,8 +31,7 @@ def test_tuning_curves(Simulator, dimensions):
         ens = nengo.Ensemble(10, neuron_type=nengo.Direct(), dimensions=dimensions)
     sim = Simulator(model)
 
-    eval_points, activities = nengo.utils.ensemble.tuning_curves(
-        ens, sim, apply_encoders=True)
+    eval_points, activities = nengo.utils.ensemble.tuning_curves(ens, sim)
 
     with Plotter(Simulator) as plt:
         plot_tuning_curves(
@@ -55,8 +54,7 @@ def test_tuning_curves_normal_mode(Simulator, dimensions):
             max_rates=Uniform(200, max_rate))
     sim = Simulator(model)
 
-    eval_points, activities = nengo.utils.ensemble.tuning_curves(
-        ens, sim, apply_encoders=True)
+    eval_points, activities = nengo.utils.ensemble.tuning_curves(ens, sim)
 
     with Plotter(Simulator) as plt:
         plot_tuning_curves(
@@ -77,8 +75,7 @@ def test_tuning_curves_along_pref_direction_direct_mode(Simulator):
         ens = nengo.Ensemble(30, neuron_type=nengo.Direct(), dimensions=10, radius=1.5)
     sim = Simulator(model)
 
-    x, activities = nengo.utils.ensemble.tuning_curves(
-        ens, sim, apply_encoders=False)
+    x, activities = nengo.utils.ensemble.response_curves(ens, sim)
 
     with Plotter(Simulator) as plt:
         plt.plot(x, activities)
@@ -101,8 +98,7 @@ def test_tuning_curves_along_pref_direction_normal_mode(Simulator):
             max_rates=Uniform(200, max_rate))
     sim = Simulator(model)
 
-    x, activities = nengo.utils.ensemble.tuning_curves(
-        ens, sim, apply_encoders=False)
+    x, activities = nengo.utils.ensemble.response_curves(ens, sim)
 
     with Plotter(Simulator) as plt:
         plt.plot(x, activities)

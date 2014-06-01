@@ -3,7 +3,7 @@ import numpy as np
 import nengo.utils.numpy as npext
 
 
-def tuning_curves(ens, sim, inputs=None, apply_encoders=False):
+def tuning_curves(ens, sim, inputs=None):
     """Calculates the tuning curves of an ensemble.
 
     Parameters
@@ -15,10 +15,6 @@ def tuning_curves(ens, sim, inputs=None, apply_encoders=False):
         ensemble does not have tuning curves assigned to it.)
     inputs : TODO
         TODO
-    apply_encoders : boolean, optional
-        If ``True``, the (unscaled, i.e. the radius will be ignored) encoders
-        will be applied to the inputs. Otherwise it is assumed that the input
-        is already encoded.
 
     Returns
     -------
@@ -31,26 +27,49 @@ def tuning_curves(ens, sim, inputs=None, apply_encoders=False):
 
     if inputs is None:
         inputs = np.linspace(-1.0, 1.0)
-        if apply_encoders:
-            if ens.dimensions > 1:
-                inputs = np.meshgrid(
-                    *(ens.dimensions * [inputs]), indexing='ij')
-            else:
-                inputs = [inputs]
+        if ens.dimensions > 1:
+            inputs = np.meshgrid(*(ens.dimensions * [inputs]), indexing='ij')
+        else:
+            inputs = [inputs]
 
-    if apply_encoders:
-        flattened = np.column_stack([i.flat for i in inputs])
-        x = np.dot(flattened, sim.data[ens].encoders.T)
-    else:
-        x = np.atleast_2d(inputs).T
-
+    flattened = np.column_stack([i.flat for i in inputs])
+    x = np.dot(flattened, sim.data[ens].encoders.T)
     activities = ens.neuron_type.rates(
         x, sim.data[ens].gain, sim.data[ens].bias)
+    activities = np.reshape(activities.T, (-1,) + inputs[0].shape)
 
-    if apply_encoders:
-        activities = np.reshape(activities.T, (-1,) + inputs[0].shape)
-    else:
-        activities = np.squeeze(activities)
+    return inputs, activities
+
+
+def response_curves(ens, sim, inputs=None):
+    """Calculates the tuning curves of an ensemble.
+
+    Parameters
+    ----------
+    ens : nengo.Ensemble
+        Ensemble to calculate the tuning curves of.
+    sim : nengo.Simulator
+        Simulator providing information about the build ensemble. (An unbuild
+        ensemble does not have tuning curves assigned to it.)
+    inputs : TODO
+        TODO
+
+    Returns
+    -------
+    inputs : TODO
+        The passed or auto-generated `inputs`.
+    activities : ndarray
+        TODO
+        The activities of the individual neurons given the `inputs`.
+    """
+
+    if inputs is None:
+        inputs = np.linspace(-1.0, 1.0)
+
+    x = np.atleast_2d(inputs).T
+    activities = ens.neuron_type.rates(
+        x, sim.data[ens].gain, sim.data[ens].bias)
+    activities = np.squeeze(activities)
 
     return inputs, activities
 
