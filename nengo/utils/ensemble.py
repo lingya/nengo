@@ -6,6 +6,9 @@ import nengo.utils.numpy as npext
 def tuning_curves(ens, sim, inputs=None):
     """Calculates the tuning curves of an ensemble.
 
+    That is the neuron responses in dependence of the vector represented by the
+    ensemble.
+
     Parameters
     ----------
     ens : nengo.Ensemble
@@ -13,16 +16,24 @@ def tuning_curves(ens, sim, inputs=None):
     sim : nengo.Simulator
         Simulator providing information about the build ensemble. (An unbuild
         ensemble does not have tuning curves assigned to it.)
-    inputs : TODO
-        TODO
+    inputs : sequence of ndarray, optional
+        The inputs at which the tuning curves will be evaluated. For each of
+        the `D` ensemble dimensions one array of dimensionality `D` is needed.
+        The output of :func:`numpy.meshgrid` with ``indexing='ij'`` is in the
+        right format.
 
     Returns
     -------
-    inputs : TODO
+    inputs : sequence of ndarray
         The passed or auto-generated `inputs`.
     activities : ndarray
-        TODO
-        The activities of the individual neurons given the `inputs`.
+        The activities of the individual neurons given the `inputs`. The first
+        dimension enumerates the neurons, the remaining dimensions map to
+        `inputs`.
+
+    See Also
+    --------
+    response_curves
     """
 
     if inputs is None:
@@ -42,25 +53,35 @@ def tuning_curves(ens, sim, inputs=None):
 
 
 def response_curves(ens, sim, inputs=None):
-    """Calculates the tuning curves of an ensemble.
+    """Calculates the response curves of an ensemble.
+
+    That is the neuron responses in dependence of an already encoded value.
+    This corresponds to the tuning curves along the neuron's preferred
+    directions.
 
     Parameters
     ----------
     ens : nengo.Ensemble
-        Ensemble to calculate the tuning curves of.
+        Ensemble to calculate the response curves of.
     sim : nengo.Simulator
         Simulator providing information about the build ensemble. (An unbuild
-        ensemble does not have tuning curves assigned to it.)
-    inputs : TODO
-        TODO
+        ensemble does not have response curves assigned to it.)
+    inputs : 1d array, optional
+        The inputs between -1 and 1 at which the neuron responses will be
+        evaluated. They are assumed to be along each neuron's preferred
+        direction.
 
     Returns
     -------
-    inputs : TODO
+    inputs : 1d array
         The passed or auto-generated `inputs`.
-    activities : ndarray
-        TODO
-        The activities of the individual neurons given the `inputs`.
+    activities : 2d array
+        The activities of the individual neurons given the `inputs`. The rows
+        map to `inputs` and the colmuns to the neurons in the ensemble.
+
+    See Also
+    --------
+    tuning_curves
     """
 
     if inputs is None:
