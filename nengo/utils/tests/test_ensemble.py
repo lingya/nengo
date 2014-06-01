@@ -28,8 +28,8 @@ def plot_tuning_curves(Simulator, filename, eval_points, activities):
 def test_tuning_curves_1d(Simulator):
     model = nengo.Network(label='test_tuning_curves_1d', seed=1)
     with model:
-        ens_1d = nengo.Ensemble(nengo.LIF(10), dimensions=1)
-        ens_2d = nengo.Ensemble(nengo.LIF(10), dimensions=2)
+        ens_1d = nengo.Ensemble(10, neuron_type=nengo.LIF(), dimensions=1)
+        ens_2d = nengo.Ensemble(10, neuron_type=nengo.LIF(), dimensions=2)
     sim = Simulator(model)
 
     with pytest.raises(ValueError):
@@ -63,12 +63,13 @@ def test_tuning_curves(Simulator, dimensions):
 
 @pytest.mark.parametrize('dimensions', [1, 2])
 def test_tuning_curves_normal_mode(Simulator, dimensions):
+    radius = 10
     max_rate = 400
     model = nengo.Network(label='test_tuning_curves', seed=3)
     with model:
         ens = nengo.Ensemble(
             10, neuron_type=nengo.LIF(), dimensions=dimensions,
-            max_rates=Uniform(200, max_rate))
+            max_rates=Uniform(200, max_rate), radius=radius)
     sim = Simulator(model)
 
     eval_points, activities = nengo.utils.ensemble.tuning_curves(ens, sim)
@@ -79,10 +80,14 @@ def test_tuning_curves_normal_mode(Simulator, dimensions):
         % dimensions,
         eval_points, activities)
 
+    # Check that eval_points cover up to the radius.
+    assert np.abs(radius - np.max(np.abs(eval_points))) <= 2 * radius / len(
+        eval_points[0])
+
     assert np.all(activities >= 0)
-    # Activity might be larger than max_rate as evaluation points will be taken
-    # outside the ensemble radius.
-    assert np.all(activities <= max_rate * np.sqrt(dimensions))
+
+    d = np.sqrt(np.sum(np.asarray(eval_points) ** 2, axis=0))
+    assert np.all(activities[:, d <= radius] <= max_rate)
 
 
 def test_tuning_curves_along_pref_direction_direct_mode(Simulator):
@@ -110,7 +115,7 @@ def test_tuning_curves_along_pref_direction_normal_mode(Simulator):
     model = nengo.Network(label='test_tuning_curves', seed=4)
     with model:
         ens = nengo.Ensemble(
-            30, neuron_type=nengo.LIF(), dimensions=10, radius=1.5,
+            10, neuron_type=nengo.LIF(), dimensions=10, radius=1.5,
             max_rates=Uniform(200, max_rate))
     sim = Simulator(model)
 
