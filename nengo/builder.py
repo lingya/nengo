@@ -822,52 +822,21 @@ class Model(object):
         return obj in self.params
 
     def assign_seeds(self, network):
-        """Helper function for recursively assigning seeds, depth first"""
-        self._assign_seeds(network, True)
+        """Recursively assign seeds.
 
-    def _assign_seeds(self, network, toplevel):
+        It recurses depth first, and respects the order of object creation.
         """
-        Recursively assign seeds.
-        Depth first, using order of object creation.
-        """
-        seed = self.seed if toplevel else self.seeds[network]
+        seed = self.seed if network is self.toplevel else self.seeds[network]
         rng = np.random.RandomState(seed)
 
         for obj in network.order:
-
             self.seeds[obj] = rng.randint(npext.maxint)
 
             if hasattr(obj, 'seed') and obj.seed is not None:
                 self.seeds[obj] = obj.seed
 
             if isinstance(obj, nengo.Network):
-                self._assign_seeds(obj, False)
-
-    # def next_seed(self):
-    #    """Yields a seed to use for RNG during build computations."""
-    #    seed = self.seed
-
-    #    if self.rng_stack:
-
-    #    return seed
-
-    # def push_seed(self):
-    #    """
-    #    Supports hierarchical seeding. Normally called by networks at the
-    #    beginning of build_network.
-    #    """
-    #    seed = self.next_seed()
-    #    self.rng_stack.append(
-
-    # def pop_seed(self):
-    #    """
-    #    Supports hierarchical seeding. Normally called by networks at the
-    #    end of build_network.
-    #    """
-    #    if len(self.rng_stack) > 0:
-    #        self.rng_stack.pop()
-    #    else:
-    #        raise Exception("Model seed popped too many times.")
+                self.assign_seeds(obj)
 
 BuiltConnection = collections.namedtuple(
     'BuiltConnection', ['decoders', 'eval_points', 'transform', 'solver_info'])
