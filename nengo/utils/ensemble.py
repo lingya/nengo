@@ -4,6 +4,41 @@ import nengo.utils.numpy as npext
 
 
 def tuning_curves_1d(ens, sim, inputs=None):
+    """Calculates the tuning curves of a 1d ensemble.
+
+    The unpacked return value of this function can be passed directly to
+    :func:`matplotlib.pyplot.plot`.
+
+    Parameters
+    ----------
+    ens : nengo.Ensemble
+        Ensemble to calculate the tuning curves of.
+    sim : nengo.Simulator
+        Simulator providing information about the build ensemble. (An unbuild
+        ensemble does not have tuning curves assigned to it.)
+    inputs : 1d array, optional
+        The inputs at which the tuning curves will be evaluated.
+
+    Returns
+    -------
+    inputs : sequence of ndarray
+        The passed or auto-generated `inputs`.
+    activities : 2d array
+        The activities of the individual neurons given the `inputs`. The
+        rows correspond to the `inputs` and the columns to individual neurons.
+
+    Example
+    -------
+
+    The tuning curves can be plotted with this code snippet::
+
+        plt.plot(*tuning_curves_1d(ens, sim))
+
+    See Also
+    --------
+    tuning_curves
+    """
+
     if ens.dimensions != 1:
         raise ValueError("Ensemble dimensionality != 1.")
 
@@ -44,7 +79,7 @@ def tuning_curves(ens, sim, inputs=None):
 
     See Also
     --------
-    response_curves
+    tuning_curves_1d, response_curves
     """
 
     if inputs is None:
