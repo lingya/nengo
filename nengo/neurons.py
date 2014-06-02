@@ -27,6 +27,9 @@ class NeuronType(object):
 
         return True
 
+    def __hash__(self):
+        return hash((self.__class__, tuple(self.__dict__.items())))
+
 
 class Direct(NeuronType):
     """Direct mode. Functions are computed explicitly, instead of in neurons.

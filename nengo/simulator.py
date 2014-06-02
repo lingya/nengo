@@ -12,6 +12,7 @@ import logging
 import numpy as np
 
 from nengo.builder import Model, Builder, SignalDict
+from nengo.optimizer import ModelOptimizer
 from nengo.utils.graphs import toposort
 from nengo.utils.simulator import operator_depencency_graph
 
@@ -103,6 +104,8 @@ class Simulator(object):
         if network is not None:
             # Build the network into the model
             Builder.build(network, model=self.model)
+
+        ModelOptimizer.optimize(network, model=self.model)
 
         # Use model seed as simulator seed if the seed is not provided
         # Note: seed is not used right now, but one day...

@@ -72,3 +72,35 @@ def with_metaclass(meta, *bases):
                 return type.__new__(cls, name, (), d)
             return meta(name, bases, d)
     return metaclass('temporary_class', None, {})
+
+
+def groupby(objects, key, hashable=True):
+    if hashable:
+        # use a dictionary to sort by hash
+        groups = {}
+        for obj in objects:
+            groups.setdefault(key(obj), []).append(obj)
+        return groups.items()
+    else:
+        # rely on equals method
+        objects = sorted(objects, key=key)
+
+        groups = []
+        curlist = []
+        for i, obj in enumerate(objects):
+            objkey = key(obj)
+            if i == 0:
+                curkey = objkey
+                curlist = [obj]
+            else:
+                if objkey == curkey:
+                    curlist.append(obj)
+                else:
+                    groups.append((curkey, curlist))
+                    curkey = objkey
+                    curlist = [obj]
+
+        if len(curlist) > 0:
+            groups.append((curkey, curlist))
+
+        return groups
