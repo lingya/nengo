@@ -370,19 +370,14 @@ class SignalDict(dict):
             sio.write("%s %s\n" % (repr(k), repr(self[k])))
         return sio.getvalue()
 
-    def reset(self, signal):
-        """Reset ndarray to the base value of the signal that maps to it"""
-        self.__getitem__(signal.base)[...] = self._get_base_array(signal)
-
     def init(self, signal):
         """Set up a permanent mapping from signal -> ndarray."""
-        dict.__setitem__(self, signal.base, self._get_base_array(signal))
+        dict.__setitem__(self, signal.base,
+                         np.array(signal.base.value, copy=True))
 
-    def _get_base_array(self, signal):
-        """Get the base array of a signal"""
-        base = np.zeros(signal.base.shape,
-                        dtype=signal.base.dtype) + signal.base.value
-        return np.asarray(base)
+    def reset(self, signal):
+        """Reset ndarray to the base value of the signal that maps to it"""
+        self[signal] = signal.value
 
 
 class Operator(object):
@@ -1473,11 +1468,14 @@ Builder.register_builder(build_pes, nengo.learning_rules.PES)
 
 
 def build_bcm(bcm, conn, model, config):
-    pre_activities = model.sig[conn.pre.ensemble]['neuron_out']
-    post_activities = model.sig[conn.post.ensemble]['neuron_out']
+    pre = (conn.pre if isinstance(conn.pre, nengo.objects.Ensemble)
+           else conn.pre.ensemble)
+    post = (conn.post if isinstance(conn.post, nengo.objects.Ensemble)
+            else conn.post.ensemble)
+    pre_activities = model.sig[pre]['neuron_out']
+    post_activities = model.sig[post]['neuron_out']
 
-    delta = Signal(np.zeros((conn.post.ensemble.n_neurons,
-                             conn.pre.ensemble.n_neurons)), name='delta')
+    delta = Signal(np.zeros((post.n_neurons, pre.n_neurons)), name='delta')
 
     pre_filtered = filtered_signal(
         bcm, pre_activities, bcm.pre_tau, model, config)
@@ -1501,13 +1499,17 @@ Builder.register_builder(build_bcm, nengo.learning_rules.BCM)
 
 
 def build_oja(oja, conn, model, config):
-    pre_activities = model.sig[conn.pre.ensemble]['neuron_out']
-    post_activities = model.sig[conn.post.ensemble]['neuron_out']
+    pre = (conn.pre if isinstance(conn.pre, nengo.objects.Ensemble)
+           else conn.pre.ensemble)
+    post = (conn.post if isinstance(conn.post, nengo.objects.Ensemble)
+            else conn.post.ensemble)
+    pre_activities = model.sig[pre]['neuron_out']
+    post_activities = model.sig[post]['neuron_out']
     pre_filtered = filtered_signal(
         oja, pre_activities, oja.pre_tau, model, config)
     post_filtered = filtered_signal(
         oja, post_activities, oja.post_tau, model, config)
-    omega_shape = (conn.post.ensemble.n_neurons, conn.pre.ensemble.n_neurons)
+    omega_shape = (post.n_neurons, pre.n_neurons)
 
     transform = model.sig[conn]['transform']
     delta = Signal(np.zeros(omega_shape), name='Oja: Delta')
