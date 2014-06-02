@@ -110,10 +110,12 @@ class Simulator(object):
 
         # -- map from Signal.base -> ndarray
         self.signals = SignalDict(__time__=np.asarray(0.0, dtype=np.float64))
-        for op in self.model.operators:
+
+        for op in self.model.all_ops:
             op.init_signals(self.signals, self.dt)
 
-        self.dg = operator_depencency_graph(self.model.operators)
+        self.dg = operator_depencency_graph(list(self.model.all_ops))
+
         self._step_order = [node for node in toposort(self.dg)
                             if hasattr(node, 'make_step')]
         self._steps = [node.make_step(self.signals, self.dt)

@@ -791,7 +791,7 @@ class Model(object):
         self.toplevel = None
 
         # Resources used by the build process.
-        self.operators = []
+        self.operators = {}
         self.params = {}
         self.probes = []
         self.sig = collections.defaultdict(dict)
@@ -805,12 +805,21 @@ class Model(object):
     def __str__(self):
         return "Model: %s" % self.label
 
-    def add_op(self, op):
-        self.operators.append(op)
+    def add_op(self, owner, op):
+        self.operators.setdefault(owner, []).append(op)
+
         # Fail fast by trying make_step with a temporary sigdict
         signals = SignalDict(__time__=np.asarray(0.0, dtype=np.float64))
         op.init_signals(signals, self.dt)
         op.make_step(signals, self.dt)
+
+    def add_ops(self, owner, ops):
+        for op in ops:
+            self.add_op(owner, op)
+
+    @property
+    def all_ops(self):
+        return (op for key, ops in self.operators.items() for op in ops)
 
     def has_built(self, obj):
         """Returns true iff obj has been processed by build."""
@@ -933,7 +942,7 @@ def build_ensemble(ens, model, config):  # noqa: C901
     # Set up signal
     model.sig[ens]['in'] = Signal(np.zeros(ens.dimensions),
                                   name="%s.signal" % ens.label)
-    model.add_op(Reset(model.sig[ens]['in']))
+    model.add_op(ens, Reset(model.sig[ens]['in']))
 
     # Set up encoders
     if isinstance(ens.neuron_type, nengo.neurons.Direct):
@@ -966,14 +975,14 @@ def build_ensemble(ens, model, config):  # noqa: C901
         model.sig[ens]['neuron_in'] = Signal(
             np.zeros(ens.dimensions), name='%s.neuron_in' % ens.label)
         model.sig[ens]['neuron_out'] = model.sig[ens]['neuron_in']
-        model.add_op(Reset(model.sig[ens]['neuron_in']))
+        model.add_op(ens, Reset(model.sig[ens]['neuron_in']))
     else:
         model.sig[ens]['neuron_in'] = Signal(
             np.zeros(ens.n_neurons), name="%s.neuron_in" % ens.label)
         model.sig[ens]['neuron_out'] = Signal(
             np.zeros(ens.n_neurons), name="%s.neuron_out" % ens.label)
-        model.add_op(Copy(src=Signal(bias, name="%s.bias" % ens.label),
-                          dst=model.sig[ens]['neuron_in']))
+        model.add_op(ens, Copy(src=Signal(bias, name="%s.bias" % ens.label),
+                               dst=model.sig[ens]['neuron_in']))
         # This adds the neuron's operator and sets other signals
         Builder.build(ens.neuron_type, ens, model=model, config=config)
 
@@ -987,7 +996,7 @@ def build_ensemble(ens, model, config):  # noqa: C901
         scaled_encoders, name="%s.scaled_encoders" % ens.label)
 
     # Create output signal, using built Neurons
-    model.add_op(DotInc(
+    model.add_op(ens, DotInc(
         model.sig[ens]['encoders'],
         model.sig[ens]['in'],
         model.sig[ens]['neuron_in'],
@@ -1008,9 +1017,10 @@ Builder.register_builder(build_ensemble, nengo.objects.Ensemble)
 
 
 def build_lifrate(lif, ens, model, config):
-    model.add_op(SimNeurons(neurons=lif,
-                            J=model.sig[ens]['neuron_in'],
-                            output=model.sig[ens]['neuron_out']))
+    model.add_op(ens, SimNeurons(
+        neurons=lif,
+        J=model.sig[ens]['neuron_in'],
+        output=model.sig[ens]['neuron_out']))
 
 Builder.register_builder(build_lifrate, nengo.neurons.LIFRate)
 
@@ -1020,7 +1030,7 @@ def build_lif(lif, ens, model, config):
         np.zeros(ens.n_neurons), name="%s.voltage" % ens.label)
     model.sig[ens]['refractory_time'] = Signal(
         np.zeros(ens.n_neurons), name="%s.refractory_time" % ens.label)
-    model.add_op(SimNeurons(
+    model.add_op(ens, SimNeurons(
         neurons=lif,
         J=model.sig[ens]['neuron_in'],
         output=model.sig[ens]['neuron_out'],
@@ -1032,10 +1042,11 @@ Builder.register_builder(build_lif, nengo.neurons.LIF)
 def build_alifrate(alif, ens, model, config):
     model.sig[ens]['adaptation'] = Signal(
         np.zeros(ens.n_neurons), name="%s.adaptation" % ens.label)
-    model.add_op(SimNeurons(neurons=alif,
-                            J=model.sig[ens]['neuron_in'],
-                            output=model.sig[ens]['neuron_out'],
-                            states=[model.sig[ens]['adaptation']]))
+    model.add_op(ens, SimNeurons(
+        neurons=alif,
+        J=model.sig[ens]['neuron_in'],
+        output=model.sig[ens]['neuron_out'],
+        states=[model.sig[ens]['adaptation']]))
 
 Builder.register_builder(build_alifrate, nengo.neurons.AdaptiveLIFRate)
 
@@ -1047,12 +1058,13 @@ def build_alif(alif, ens, model, config):
         np.zeros(ens.n_neurons), name="%s.refractory_time" % ens.label)
     model.sig[ens]['adaptation'] = Signal(
         np.zeros(ens.n_neurons), name="%s.adaptation" % ens.label)
-    model.add_op(SimNeurons(neurons=alif,
-                            J=model.sig[ens]['neuron_in'],
-                            output=model.sig[ens]['neuron_out'],
-                            states=[model.sig[ens]['voltage'],
-                                    model.sig[ens]['refractory_time'],
-                                    model.sig[ens]['adaptation']]))
+    model.add_op(ens, SimNeurons(
+        neurons=alif,
+        J=model.sig[ens]['neuron_in'],
+        output=model.sig[ens]['neuron_out'],
+        states=[model.sig[ens]['voltage'],
+                model.sig[ens]['refractory_time'],
+                model.sig[ens]['adaptation']]))
 
 Builder.register_builder(build_alif, nengo.neurons.AdaptiveLIF)
 
@@ -1064,7 +1076,7 @@ def build_node(node, model, config):
             model.sig[node]['in'] = Signal(
                 np.zeros(node.size_in), name="%s.signal" % node.label)
             # Reset input signal to 0 each timestep
-            model.add_op(Reset(model.sig[node]['in']))
+            model.add_op(node, Reset(model.sig[node]['in']))
 
     # Provide output
     if node.output is None:
@@ -1072,17 +1084,18 @@ def build_node(node, model, config):
     elif not is_callable(node.output):
         model.sig[node]['out'] = Signal(node.output, name=node.label)
     else:
-        sig_in, sig_out = build_pyfunc(fn=node.output,
+        sig_in, sig_out = build_pyfunc(owner=node,
+                                       fn=node.output,
                                        t_in=True,
                                        n_in=node.size_in,
                                        n_out=node.size_out,
                                        label="%s.pyfn" % node.label,
                                        model=model)
         if sig_in is not None:
-            model.add_op(DotInc(model.sig[node]['in'],
-                                model.sig['common'][1],
-                                sig_in,
-                                tag="%s input" % node.label))
+            model.add_op(node, DotInc(model.sig[node]['in'],
+                                      model.sig['common'][1],
+                                      sig_in,
+                                      tag="%s input" % node.label))
         if sig_out is not None:
             model.sig[node]['out'] = sig_out
 
@@ -1145,7 +1158,7 @@ def build_probe(probe, model, config):
         # Make a sink signal for the connection
         model.sig[probe]['in'] = Signal(np.zeros(conn.dimensions),
                                         name=probe.label)
-        model.add_op(Reset(model.sig[probe]['in']))
+        model.add_op(probe, Reset(model.sig[probe]['in']))
         # Build the connection
         Builder.build(conn, model=model, config=config)
 
@@ -1186,16 +1199,17 @@ def build_connection(conn, model, config):  # noqa: C901
             signal = model.sig[conn]['in']
         else:
             sig_in, signal = build_pyfunc(
+                owner=conn,
                 fn=conn.function,
                 t_in=False,
                 n_in=model.sig[conn]['in'].size,
                 n_out=conn.dimensions,
                 label=conn.label,
                 model=model)
-            model.add_op(DotInc(model.sig[conn]['in'],
-                                model.sig['common'][1],
-                                sig_in,
-                                tag="%s input" % conn.label))
+            model.add_op(conn, DotInc(model.sig[conn]['in'],
+                                      model.sig['common'][1],
+                                      sig_in,
+                                      tag="%s input" % conn.label))
     elif isinstance(conn.pre, nengo.objects.Ensemble):
         # Normal decoded connection
         encoders = model.params[conn.pre].encoders
@@ -1247,11 +1261,11 @@ def build_connection(conn, model, config):  # noqa: C901
         model.sig[conn]['decoders'] = Signal(
             decoders, name="%s.decoders" % conn.label)
         signal = Signal(np.zeros(signal_size), name=conn.label)
-        model.add_op(ProdUpdate(model.sig[conn]['decoders'],
-                                model.sig[conn]['in'],
-                                model.sig['common'][0],
-                                signal,
-                                tag="%s decoding" % conn.label))
+        model.add_op(conn, ProdUpdate(model.sig[conn]['decoders'],
+                                      model.sig[conn]['in'],
+                                      model.sig['common'][0],
+                                      signal,
+                                      tag="%s decoding" % conn.label))
     else:
         # Direct connection
         signal = model.sig[conn]['in']
@@ -1265,7 +1279,7 @@ def build_connection(conn, model, config):  # noqa: C901
         model.sig[conn]['out'] = Signal(
             np.zeros(model.sig[conn]['out'].size),
             name="%s.mod_output" % conn.label)
-        model.add_op(Reset(model.sig[conn]['out']))
+        model.add_op(conn, Reset(model.sig[conn]['out']))
 
     # Add operator for transform
     if isinstance(conn.post, nengo.objects.Neurons):
@@ -1280,10 +1294,10 @@ def build_connection(conn, model, config):  # noqa: C901
 
     model.sig[conn]['transform'] = Signal(transform,
                                           name="%s.transform" % conn.label)
-    model.add_op(DotInc(model.sig[conn]['transform'],
-                        signal,
-                        model.sig[conn]['out'],
-                        tag=conn.label))
+    model.add_op(conn, DotInc(model.sig[conn]['transform'],
+                              signal,
+                              model.sig[conn]['out'],
+                              tag=conn.label))
 
     if conn.learning_rule:
         # Forcing update of signal that is modified by learning rules.
@@ -1307,11 +1321,11 @@ def build_connection(conn, model, config):  # noqa: C901
                             % (type(conn.pre).__name__,
                                type(conn.post).__name__))
 
-        model.add_op(ProdUpdate(model.sig['common'][0],
-                                model.sig['common'][0],
-                                model.sig['common'][1],
-                                modified_signal,
-                                tag="Learning Rule Dummy Update"))
+        model.add_op(conn, ProdUpdate(model.sig['common'][0],
+                                      model.sig['common'][0],
+                                      model.sig['common'][1],
+                                      modified_signal,
+                                      tag="Learning Rule Dummy Update"))
 
     model.params[conn] = BuiltConnection(decoders=decoders,
                                          eval_points=eval_points,
@@ -1333,10 +1347,10 @@ def filtered_signal(owner, sig, synapse, model, config):
     return model.sig[owner]['synapse_out']
 
 
-def build_pyfunc(fn, t_in, n_in, n_out, label, model):
+def build_pyfunc(owner, fn, t_in, n_in, n_out, label, model):
     if n_in:
         sig_in = Signal(np.zeros(n_in), name="%s.input" % label)
-        model.add_op(Reset(sig_in))
+        model.add_op(owner, Reset(sig_in))
     else:
         sig_in = None
 
@@ -1345,7 +1359,7 @@ def build_pyfunc(fn, t_in, n_in, n_out, label, model):
     else:
         sig_out = None
 
-    model.add_op(SimPyFunc(output=sig_out, fn=fn, t_in=t_in, x=sig_in))
+    model.add_op(owner, SimPyFunc(output=sig_out, fn=fn, t_in=t_in, x=sig_in))
 
     return sig_in, sig_out
 
@@ -1357,9 +1371,10 @@ def build_discrete_filter_synapse(
         np.zeros(input_signal.size),
         name="%s.%s" % (input_signal.name, synapse))
 
-    model.add_op(SimFilterSynapse(input=model.sig[owner]['synapse_in'],
-                                  output=model.sig[owner]['synapse_out'],
-                                  num=num, den=den))
+    model.add_op(owner, SimFilterSynapse(
+        input=model.sig[owner]['synapse_in'],
+        output=model.sig[owner]['synapse_out'],
+        num=num, den=den))
 
 
 def build_filter_synapse(synapse, owner, input_signal, model, config):
@@ -1417,8 +1432,9 @@ def build_pes(pes, conn, model, config):
 
     lr_sig = Signal(pes.learning_rate * model.dt, name="PES:learning_rate")
 
-    model.add_op(Reset(scaled_error))
-    model.add_op(DotInc(lr_sig, error, scaled_error, tag="PES:scale error"))
+    model.add_op(conn, Reset(scaled_error))
+    model.add_op(conn, DotInc(
+        lr_sig, error, scaled_error, tag="PES:scale error"))
 
     if conn.solver.weights or isinstance(conn.pre, nengo.objects.Neurons):
         outer_product = Signal(np.zeros((error.size, activities.size)),
@@ -1429,18 +1445,21 @@ def build_pes(pes, conn, model, config):
         else:
             encoders = model.sig[conn.post]['encoders']
 
-        model.add_op(Reset(outer_product))
-        model.add_op(DotInc(scaled_error_view, activities_view, outer_product,
-                            tag="PES:Outer Prod"))
-        model.add_op(DotInc(encoders, outer_product, transform,
-                            tag="PES:Inc Decoder"))
+        model.add_op(conn, Reset(outer_product))
+        model.add_op(conn, DotInc(
+            scaled_error_view, activities_view, outer_product,
+            tag="PES:Outer Prod"))
+        model.add_op(conn, DotInc(
+            encoders, outer_product, transform,
+            tag="PES:Inc Decoder"))
 
     else:
         assert isinstance(conn.pre, nengo.objects.Ensemble)
         decoders = model.sig[conn]['decoders']
 
-        model.add_op(DotInc(scaled_error_view, activities_view, decoders,
-                            tag="PES:Inc Decoder"))
+        model.add_op(conn, DotInc(
+            scaled_error_view, activities_view, decoders,
+            tag="PES:Inc Decoder"))
 
     model.params[pes] = None
 
@@ -1463,14 +1482,15 @@ def build_bcm(bcm, conn, model, config):
 
     transform = model.sig[conn]['transform']
 
-    model.add_op(DotInc(
+    model.add_op(conn, DotInc(
         model.sig['common'][1], delta, transform, tag="BCM: DotInc"))
 
-    model.add_op(SimBCM(delta=delta,
-                        pre_filtered=pre_filtered,
-                        post_filtered=post_filtered,
-                        theta=theta,
-                        learning_rate=bcm.learning_rate))
+    model.add_op(conn, SimBCM(
+        delta=delta,
+        pre_filtered=pre_filtered,
+        post_filtered=post_filtered,
+        theta=theta,
+        learning_rate=bcm.learning_rate))
 
 Builder.register_builder(build_bcm, nengo.learning_rules.BCM)
 
@@ -1488,20 +1508,22 @@ def build_oja(oja, conn, model, config):
     delta = Signal(np.zeros(omega_shape), name='Oja: Delta')
     forgetting = Signal(np.zeros(omega_shape), name='Oja: Forgetting')
 
-    model.add_op(DotInc(
+    model.add_op(conn, DotInc(
         model.sig['common'][1], delta, transform, tag="Oja: Delta DotInc"))
 
-    model.add_op(DotInc(Signal(-oja.beta, "Oja: Negative oja scale"),
-                        forgetting,
-                        transform,
-                        tag="Oja: Forgetting DotInc"))
+    model.add_op(conn, DotInc(
+        Signal(-oja.beta, "Oja: Negative oja scale"),
+        forgetting,
+        transform,
+        tag="Oja: Forgetting DotInc"))
 
-    model.add_op(SimOja(transform=transform,
-                        delta=delta,
-                        pre_filtered=pre_filtered,
-                        post_filtered=post_filtered,
-                        forgetting=forgetting,
-                        learning_rate=oja.learning_rate))
+    model.add_op(conn, SimOja(
+        transform=transform,
+        delta=delta,
+        pre_filtered=pre_filtered,
+        post_filtered=post_filtered,
+        forgetting=forgetting,
+        learning_rate=oja.learning_rate))
 
     model.params[oja] = None
 

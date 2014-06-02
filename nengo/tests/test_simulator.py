@@ -59,7 +59,7 @@ def test_signal_indexing_1(RefSimulator):
     tmp = Signal(np.zeros(3), name="tmp")
 
     m = Model(dt=0.001)
-    m.operators += [
+    m.add_ops(None, [
         ProdUpdate(
             Signal(1, name="A1"), three[:1], Signal(0, name="Z0"), one),
         ProdUpdate(
@@ -68,7 +68,7 @@ def test_signal_indexing_1(RefSimulator):
         DotInc(
             Signal([[0, 0, 1], [0, 1, 0], [1, 0, 0]], name="A3"), three, tmp),
         Copy(src=tmp, dst=three, as_update=True),
-    ]
+    ])
 
     sim = RefSimulator(None, model=m)
     sim.signals[three] = np.asarray([1, 2, 3])
@@ -87,12 +87,13 @@ def test_simple_pyfunc(RefSimulator):
     time = Signal(np.zeros(1), name="time")
     sig = Signal(np.zeros(1), name="sig")
     m = Model(dt=dt)
-    sig_in, sig_out = build_pyfunc(lambda t, x: np.sin(x), True, 1, 1, None, m)
-    m.operators += [
+    sig_in, sig_out = build_pyfunc(
+        None, lambda t, x: np.sin(x), True, 1, 1, None, m)
+    m.add_ops(None, [
         ProdUpdate(Signal(dt), Signal(1), Signal(1), time),
         DotInc(Signal([[1.0]]), time, sig_in),
         ProdUpdate(Signal([[1.0]]), sig_out, Signal(0), sig),
-    ]
+    ])
 
     sim = RefSimulator(None, model=m)
     sim.step()
@@ -110,11 +111,12 @@ def test_encoder_decoder_pathway(RefSimulator):
     decoders = np.asarray([.2, .1])
     decs = Signal(decoders * 0.5)
     m = Model(dt=0.001)
-    sig_in, sig_out = build_pyfunc(lambda t, x: x + 1, True, 2, 2, None, m)
-    m.operators += [
+    sig_in, sig_out = build_pyfunc(
+        None, lambda t, x: x + 1, True, 2, 2, None, m)
+    m.add_ops(None, [
         DotInc(Signal([[1.0], [2.0]]), foo, sig_in),
         ProdUpdate(decs, sig_out, Signal(0.2), foo)
-    ]
+    ])
 
     def check(sig, target):
         assert np.allclose(sim.signals[sig], target)
@@ -156,11 +158,12 @@ def test_encoder_decoder_with_views(RefSimulator):
     foo = Signal([1.0], name="foo")
     decoders = np.asarray([.2, .1])
     m = Model(dt=0.001)
-    sig_in, sig_out = build_pyfunc(lambda t, x: x + 1, True, 2, 2, None, m)
-    m.operators += [
+    sig_in, sig_out = build_pyfunc(
+        None, lambda t, x: x + 1, True, 2, 2, None, m)
+    m.add_ops(None, [
         DotInc(Signal([[1.0], [2.0]]), foo[:], sig_in),
         ProdUpdate(Signal(decoders * 0.5), sig_out, Signal(0.2), foo[:])
-    ]
+    ])
 
     def check(sig, target):
         assert np.allclose(sim.signals[sig], target)

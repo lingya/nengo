@@ -69,8 +69,8 @@ def test_signal_init_values(RefSimulator):
     array = nengo.builder.Signal([1, 2, 3])
 
     m = nengo.builder.Model(dt=0)
-    m.operators += [nengo.builder.ProdUpdate(zero, zero, one, five),
-                    nengo.builder.ProdUpdate(zeroarray, one, one, array)]
+    m.add_op(None, nengo.builder.ProdUpdate(zero, zero, one, five))
+    m.add_op(None, nengo.builder.ProdUpdate(zeroarray, one, one, array))
 
     sim = RefSimulator(None, model=m)
     assert sim.signals[zero][0] == 0
