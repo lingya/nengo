@@ -560,7 +560,6 @@ class Connection(NengoObject):
 
         self.synapse = synapse
         self.modulatory = modulatory
-        self.learning_rule = learning_rule
         self.seed = seed
 
         # don't check shapes until we've set all parameters
@@ -584,6 +583,8 @@ class Connection(NengoObject):
         if not isinstance(self._post, (Ensemble, Neurons, Node, Probe)):
             raise ValueError("Objects of type '%s' cannot serve as 'post'" %
                              self._post.__class__.__name__)
+
+        self.learning_rule = learning_rule
 
         # check that shapes match up
         self._skip_check_shapes = False
@@ -734,7 +735,10 @@ class Connection(NengoObject):
 
         for lr in self._learning_rule:
             assert isinstance(lr, LearningRule)
-            assert type(self.pre).__name__ in lr.modifies
+            if self.solver.weights:
+                assert 'Neurons' in lr.modifies
+            else:
+                assert type(self.pre).__name__ in lr.modifies
 
 
 class Probe(NengoObject):

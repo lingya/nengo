@@ -376,7 +376,7 @@ class SignalDict(dict):
                          np.array(signal.base.value, copy=True))
 
     def reset(self, signal):
-        """Reset ndarray to the base value of the signal that maps to it"""
+        """Reset ndarray to the base value of the signal that maps to it."""
         self[signal] = signal.value
 
 
