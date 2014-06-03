@@ -514,6 +514,7 @@ class Copy(Operator):
     def make_step(self, signals, dt):
         dst = signals[self.dst]
         src = signals[self.src]
+        assert np.array_equal(src.shape, dst.shape)
 
         def step():
             dst[...] = src
@@ -799,6 +800,8 @@ class Model(object):
         self.params = {}
         self.probes = []
         self.sig = collections.defaultdict(dict)
+        self.sig['common'][0] = Signal(0.0, name='Common: Zero')
+        self.sig['common'][1] = Signal(1.0, name='Common: One')
 
         self.dt = dt
         self.label = label
@@ -880,10 +883,6 @@ def build_network(network, model):  # noqa: C901
     """
     if model.toplevel is None:
         model.toplevel = network
-
-    if model.toplevel == network:
-        model.sig['common'][0] = Signal(0.0, name='Common: Zero')
-        model.sig['common'][1] = Signal(1.0, name='Common: One')
 
     logger.info("Network step 1: Building ensembles and nodes")
     for obj in network.ensembles + network.nodes:

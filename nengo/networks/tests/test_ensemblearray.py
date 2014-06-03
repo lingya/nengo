@@ -171,6 +171,37 @@ def test_arguments():
         nengo.networks.EnsembleArray(nengo.LIF(10), 1, dimensions=2)
 
 
+def test_optimizer(Simulator):
+    n_ensembles = 500
+    n_neurons = 100
+
+    rng = np.random.RandomState(90)
+    x = rng.uniform(-1, 1, size=n_ensembles)
+
+    m = nengo.Network(seed=42)
+    with m:
+        m.config[nengo.Ensemble].neuron_type = nengo.LIF()
+        u = nengo.Node(output=x)
+        # a = nengo.networks.EnsembleArray(n_neurons, n_ensembles)
+        a = nengo.networks.EnsembleArray(n_neurons, n_ensembles, optimize=True, fast=True)
+        nengo.Connection(u, a.input)
+        ap = nengo.Probe(a.output, synapse=0.03)
+
+    sim = Simulator(m)
+    sim.run(1.0)
+    values = sim.data[ap]
+    y = values[-100:]
+
+    with Plotter(Simulator) as plt:
+        t = sim.trange()
+        plt.plot(t, np.ones((len(t), 1)) * x, '--')
+        plt.plot(t, values)
+        plt.savefig('test_ensemblearray.test_optimizer.pdf')
+        plt.close()
+
+    assert np.allclose(y, x, atol=0.05, rtol=0)
+
+
 if __name__ == "__main__":
     nengo.log(debug=True)
     pytest.main([__file__, '-v'])
