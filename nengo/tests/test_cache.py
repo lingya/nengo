@@ -12,16 +12,6 @@ from nengo.cache import DecoderCache, Fingerprint
 from nengo.utils.testing import Timer
 
 
-@pytest.fixture(scope='function')
-def cache_dir(request):
-    d = tempfile.mkdtemp()
-
-    def fin():
-        shutil.rmtree(d)
-    request.addfinalizer(fin)
-    return d
-
-
 class SolverMock(object):
     n_calls = {}
 
@@ -37,7 +27,9 @@ class SolverMock(object):
             return np.random.rand(A.shape[1], E.shape[1]), {'info': 'v'}
 
 
-def test_decoder_cache(cache_dir):
+def test_decoder_cache(tmpdir):
+    cache_dir = str(tmpdir)
+
     M = 100
     N = 10
     D = 2
@@ -68,7 +60,9 @@ def test_decoder_cache(cache_dir):
     assert SolverMock.n_calls[another_solver] == 1
 
 
-def test_corrupted_decoder_cache(cache_dir):
+def test_corrupted_decoder_cache(tmpdir):
+    cache_dir = str(tmpdir)
+
     M = 100
     N = 10
     D = 2
@@ -90,7 +84,8 @@ def test_corrupted_decoder_cache(cache_dir):
     assert SolverMock.n_calls[solver_mock] == 2
 
 
-def test_decoder_cache_invalidation(cache_dir):
+def test_decoder_cache_invalidation(tmpdir):
+    cache_dir = str(tmpdir)
     solver_mock = SolverMock()
 
     M = 100
@@ -109,7 +104,8 @@ def test_decoder_cache_invalidation(cache_dir):
     assert SolverMock.n_calls[solver_mock] == 2
 
 
-def test_decoder_cache_shrinking(cache_dir):
+def test_decoder_cache_shrinking(tmpdir):
+    cache_dir = str(tmpdir)
     solver_mock = SolverMock()
     another_solver = SolverMock('another_solver')
 
@@ -145,7 +141,8 @@ def test_decoder_cache_shrinking(cache_dir):
     assert SolverMock.n_calls[another_solver] == 1
 
 
-def test_decoder_cache_with_E_argument_to_solver(cache_dir):
+def test_decoder_cache_with_E_argument_to_solver(tmpdir):
+    cache_dir = str(tmpdir)
     solver_mock = SolverMock()
 
     M = 100
@@ -220,7 +217,9 @@ def calc_relative_timer_diff(t1, t2):
 
 
 @pytest.mark.benchmark
-def test_cache_performance(cache_dir, Simulator):
+def test_cache_performance(tmpdir, Simulator):
+    cache_dir = str(tmpdir)
+
     model = nengo.Network(seed=1)
     with model:
         nengo.Connection(nengo.Ensemble(1500, 10), nengo.Ensemble(1500, 10))
