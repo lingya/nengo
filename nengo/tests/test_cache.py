@@ -234,3 +234,8 @@ def test_cache_performance(cache_dir, Simulator):
         nengo.Simulator(model, model=built_model, caching=True)
     assert calc_relative_timer_diff(t_no_cache, t_cache_miss) < 0.1
     assert calc_relative_timer_diff(t_cache_hit, t_no_cache) > 0.75
+
+
+if __name__ == "__main__":
+    nengo.log(debug=True)
+    pytest.main([__file__, '-v'])
