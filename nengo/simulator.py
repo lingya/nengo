@@ -121,8 +121,6 @@ class Simulator(object):
             Builder.build(
                 network, model=self.model)
 
-        self.model.decoder_cache.shrink()
-
         # Use model seed as simulator seed if the seed is not provided
         # Note: seed is not used right now, but one day...
         self.seed = self.model.seed if seed is None else seed

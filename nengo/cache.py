@@ -183,6 +183,7 @@ class DecoderCache(object):
                     np.save(decoder_path, decoders)
                     with open(solver_info_path, 'wb') as f:
                         pickle.dump(solver_info, f)
+                    self.shrink()
             else:
                 logger.info(
                     "Cache hit [{0}]: Loaded stored decoders.".format(key))
