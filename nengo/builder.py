@@ -774,7 +774,7 @@ class SimBCM(Operator):
 
         def step():
             delta[...] = np.outer(post_filtered * (post_filtered - theta),
-                                  pre_filtered) * learning_rate * dt
+                                  pre_filtered) * learning_rate
         return step
 
 
@@ -1158,9 +1158,9 @@ def probe_node(probe, conn_args, model, config):
 
 
 def probe_connection(probe, conn_args, model, config):
-    if probe.attr == 'signal':
-        sig_out = model.sig[probe.target]['out']
-        return synapse_probe(sig_out, probe, model, config)
+    attr = 'out' if probe.attr == 'signal' else probe.attr
+    sig_out = model.sig[probe.target][attr]
+    return synapse_probe(sig_out, probe, model, config)
 
 
 def build_probe(probe, model, config):

@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 import nengo
-from nengo.utils.functions import piecewise
+from nengo.utils.functions import piecewise, whitenoise
 from nengo.utils.numpy import filtfilt
 from nengo.utils.testing import Plotter, allclose
 
@@ -353,17 +353,27 @@ def test_pes_learning_decoders(Simulator, nl_nodirect):
         nengo.Connection(u_learned, e, transform=-1)
         nengo.Connection(u, e)
         e_c = nengo.Connection(e, u_learned, modulatory=True)
-        nengo.Connection(a, u_learned, learning_rule=nengo.PES(e_c))
+        conn = nengo.Connection(a, u_learned, learning_rule=nengo.PES(e_c))
 
         u_learned_p = nengo.Probe(u_learned, synapse=0.1)
         e_p = nengo.Probe(e, synapse=0.1)
+        dec_p = nengo.Probe(conn, 'decoders')
 
     sim = Simulator(m)
     sim.run(1.)
 
+    with Plotter(Simulator, nl_nodirect) as plt:
+        plt.plot(sim.trange(), sim.data[dec_p][..., 10])
+        plt.title("Change in one decoder")
+        plt.xlabel("Time (s)")
+        plt.ylabel("Decoding weight")
+        plt.savefig('test_connection.test_pes_learning_decoders.pdf')
+        plt.close()
+
     assert np.allclose(sim.data[u_learned_p][-1], learned_vector, atol=0.05)
     assert np.allclose(
         sim.data[e_p][-1], np.zeros(len(learned_vector)), atol=0.05)
+    assert not np.all(sim.data[dec_p][0] == sim.data[dec_p][-1])
 
 
 def test_pes_learning_decoders_multidimensional(Simulator, nl_nodirect):
@@ -404,15 +414,15 @@ def test_pes_learning_decoders_multidimensional(Simulator, nl_nodirect):
 
 
 @pytest.mark.parametrize('learning_rule', [
-    nengo.BCM(), nengo.Oja(), [nengo.Oja(), nengo.BCM()]])
+    nengo.BCM(learning_rate=40), nengo.Oja(learning_rate=0.05),
+    [nengo.Oja(learning_rate=0.05), nengo.BCM(learning_rate=40)]])
 def test_unsupervised_learning_rule(Simulator, nl_nodirect, learning_rule):
     n = 200
-    learned_vector = [0.5, -0.5]
 
     m = nengo.Network(seed=3902)
     with m:
         m.config[nengo.Ensemble].neuron_type = nl_nodirect()
-        u = nengo.Node(output=learned_vector)
+        u = nengo.Node(whitenoise(0.1, 5, dimensions=2, seed=328))
         a = nengo.Ensemble(n, dimensions=2)
         u_learned = nengo.Ensemble(n, dimensions=2)
 
@@ -420,12 +430,24 @@ def test_unsupervised_learning_rule(Simulator, nl_nodirect, learning_rule):
                                             u_learned.n_neurons))
 
         nengo.Connection(u, a)
-        nengo.Connection(a.neurons, u_learned.neurons,
-                         transform=initial_weights,
-                         learning_rule=nengo.Oja())
+        conn = nengo.Connection(a.neurons, u_learned.neurons,
+                                transform=initial_weights,
+                                learning_rule=learning_rule)
+        trans = nengo.Probe(conn, 'transform')
 
     sim = Simulator(m)
-    sim.run(1.)
+    sim.run(0.2)
+
+    with Plotter(Simulator, nl_nodirect) as plt:
+        name = learning_rule.__class__.__name__
+        plt.plot(sim.trange(), sim.data[trans][..., 1])
+        plt.title("Change in one transform row")
+        plt.xlabel("Time (s)")
+        plt.ylabel("Transform weight")
+        plt.savefig('test_connection.test_unsup_' + name + '.pdf')
+        plt.close()
+
+    assert not np.all(sim.data[trans][0] == sim.data[trans][-1])
 
 
 def test_vector(Simulator, nl):

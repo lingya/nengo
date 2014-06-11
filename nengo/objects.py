@@ -550,7 +550,7 @@ class Connection(NengoObject):
     _function = Parameter(default=(None, 0))
     modulatory = Parameter(default=False)
     eval_points = Parameter(default=None)
-    probeable = Parameter(default=['signal'])
+    probeable = Parameter(default=['signal', 'transform', 'decoders'])
 
     def __init__(self, pre, post, synapse=Default, transform=1.0,
                  solver=Default,
