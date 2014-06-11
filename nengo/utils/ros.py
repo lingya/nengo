@@ -7,9 +7,9 @@ from nengo.objects import Node
 import rospy
 
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Wrench
-from geometry_msgs.msg import Quaternion
+from geometry_msgs.msg import Wrench, Quaternion, Twist
 from std_msgs.msg import String
+from sensor_msgs.msg import Image
 import json
 
 class RosPubNode( Node ):
@@ -144,6 +144,68 @@ class ForceTorqueNode( RosPubNode ):
     super( ForceTorqueNode, self ).__init__( name=name, topic=topic,
                                              dimensions=self.dimensions,
                                              msg_type=Wrench, trans_fnc=self.fn )
+
+class MotionVWNode( RosPubNode ):
+  """
+  This node publishes forward and angular velocity
+  """
+  
+  #TODO: add optional weights and transform function for input
+  def __init__( self, name, topic ):
+    """
+    Parameters
+    ----------
+    name : str
+        An arbitrary name for the object
+    topic : str
+        The name of the ROS topic that is being published
+    """
+
+    self.dimensions = 2
+
+    def fn( values ):
+      twist = Twist()
+      twist.linear.x = values[0]
+      twist.angular.z = values[1]
+      return twist
+
+    self.fn = fn
+
+    super( MotionVWNode, self ).__init__( name=name, topic=topic,
+                                          dimensions=self.dimensions,
+                                          msg_type=Twist, trans_fnc=self.fn )
+
+
+class MotionXYWNode( RosPubNode ):
+  """
+  This node publishes translational and angular velocity
+  """
+  
+  #TODO: add optional weights and transform function for input
+  def __init__( self, name, topic )
+    """
+    Parameters
+    ----------
+    name : str
+        An arbitrary name for the object
+    topic : str
+        The name of the ROS topic that is being published
+    """
+
+    self.dimensions = 3
+
+    def fn( values ):
+      twist = Twist()
+      twist.linear.x = values[index]
+      twist.linear.y = values[index]
+      twist.angular.z = values[index]
+      return twist
+
+    self.fn = fn
+
+    super( MotionXYWNode, self ).__init__( name=name, topic=topic,
+                                           dimensions=self.dimensions,
+                                           msg_type=Twist, trans_fnc=self.fn )
 
 class OdometryNode( RosSubNode ):
   """
@@ -304,3 +366,42 @@ class SemanticCameraNode( RosSubNode ):
     super( SemanticCameraNode, self ).__init__( name=name, topic=topic,
                                                 dimensions=self.dimensions,
                                                 msg_type=String, trans_fnc=self.fn )
+
+class VideoCameraNode( RosSubNode ):
+  """
+  This node subsamples an image and outputs pixel intensity to the output
+  dimensions
+  """
+  
+  #TODO: add optional weights and transform function for output
+  def __init__( self, name, topic ):
+    """
+    Parameters
+    ----------
+    name : str
+        An arbitrary name for the object
+    topic : str
+        The name of the ROS topic that is being subscribed to
+    """
+
+    from cv_bridge import CvBridge, CvBridgeError
+    import numpy
+
+    self.bridge = CvBridge()
+
+    self.dimensions = 16 * 16
+
+    def fn( data ):
+      rval = [0] * self.dimensions
+      #cv_im = self.bridge.imgmsg_to_cv( data, "rgba8" )
+      cv_im = self.bridge.imgmsg_to_cv( data, "mono8" )
+      #TODO: make sure mono conversion is correct
+      im = numpy.array( cv_im )
+      rval = list( im.ravel() )
+      return rval
+
+    self.fn = fn
+
+    super( VideoCameraNode, self ).__init__( name=name, topic=topic,
+                                             dimensions=self.dimensions,
+                                             msg_type=Image, trans_fnc=self.fn )
