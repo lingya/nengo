@@ -6,7 +6,8 @@ Signatures
 
 f : f(x_i)
     A function that perturbs a scalar voltage, x_i. The function signature 
-    at call is `f(x_i)`.
+    at call is `f(x_i)`. Before use these functions will be 'vectorized' using
+    `np.frompyfunc`.
 
 Note
 ----

@@ -132,8 +132,8 @@ class PerturbLIF(_LIFBase):
     def __init__(self, tau_rc=0.02, tau_ref=0.002, perturb=None):
         """Perturbs LIF voltages
         
-        Paramters
-        ---------
+        Parameters
+        ----------
         TODO - Nengo, rest?
         
         perturb : function(x_i) or None
@@ -161,16 +161,17 @@ class PerturbLIF(_LIFBase):
         super(PerturbLIF, self).__init__(tau_rc=0.02, tau_ref=0.002)
         
         self.perturb = perturb
+        if self.perturb != None:
+            self.perturb = np.frompyfunc(self.perturb, 1, 1)
         
     def step_math(self, dt, J, spiked, voltage, refractory_time):
         # update voltage using Euler's method
         dV = (dt / self.tau_rc) * (J - voltage)
         voltage += dV
         
-        # Do the perturbation
+        # Perturb voltage?
         if self.perturb != None:
-            ufunced = np.frompyfunc(self.perturb, 1, 1)
-            voltage[:] = ufunced(voltage)   
+            voltage[:] = self.perturb(voltage)   
         
         voltage[voltage < 0] = 0  # clip values below zero
 
