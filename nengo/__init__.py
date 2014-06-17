@@ -24,6 +24,8 @@ from . import networks
 from .simulator import Simulator
 from .utils.logging import log
 
+import perturb_neurons
+
 logger = logging.getLogger(__name__)
 try:
     # Prevent output if no handler set

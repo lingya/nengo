@@ -103,7 +103,7 @@ class LIF(_LIFBase):
     """Spiking version of the leaky integrate-and-fire (LIF) neuron model."""
 
     def step_math(self, dt, J, spiked, voltage, refractory_time):
-
+        
         # update voltage using Euler's method
         dV = (dt / self.tau_rc) * (J - voltage)
         voltage += dV
@@ -127,6 +127,71 @@ class LIF(_LIFBase):
         voltage[spiked > 0] = 0
         refractory_time[spiked > 0] = self.tau_ref + spiketime
 
+
+class PerturbLIF(_LIFBase):
+    def __init__(self, tau_rc=0.02, tau_ref=0.002, perturb=None):
+        """Perturbs LIF voltages
+        
+        Paramters
+        ---------
+        TODO - Nengo, rest?
+        
+        perturb : function(x_i) or None
+            A function that takes a scalar and will that scalar 
+            with each iteration. This python function is converted 
+            to ufunc, which is broadcast over the voltages array, 
+            updating voltages in place.
+            
+            >>> # For example, we can add white noise by
+            >>> import numpy as np
+            >>> def white(x_i):
+            >>>     np.random.seed()
+            >>>     return (x_i + np.random.normal(0,1,1))[0]
+            >>>         ## must return a scalar not an array, hence [0]
+            
+            >>> # Or do nothing by
+            >>> def I(x_i):
+            >>>     return x_i
+                        
+        Note
+        ----
+        If perturb is None, this unit behaves identically to
+        the LIF neuron.
+        """
+        super(PerturbLIF, self).__init__(tau_rc=0.02, tau_ref=0.002)
+        
+        self.perturb = perturb
+        
+    def step_math(self, dt, J, spiked, voltage, refractory_time):
+        # update voltage using Euler's method
+        dV = (dt / self.tau_rc) * (J - voltage)
+        voltage += dV
+        
+        # Do the perturbation
+        if self.perturb != None:
+            ufunced = np.frompyfunc(self.perturb, 1, 1)
+            voltage[:] = ufunced(voltage)   
+        
+        voltage[voltage < 0] = 0  # clip values below zero
+
+        # update refractory period assuming no spikes for now
+        refractory_time -= dt
+
+        # set voltages of neurons still in their refractory period to 0
+        # and reduce voltage of neurons partway out of their ref. period
+        voltage *= (1 - refractory_time / dt).clip(0, 1)
+
+        # determine which neurons spike (if v > 1 set spiked = 1, else 0)
+        spiked[:] = (voltage > 1)
+
+        # linearly approximate time since neuron crossed spike threshold
+        overshoot = (voltage[spiked > 0] - 1) / dV[spiked > 0]
+        spiketime = dt * (1 - overshoot)
+
+        # set spiking neurons' voltages to zero, and ref. time to tau_ref
+        voltage[spiked > 0] = 0
+        refractory_time[spiked > 0] = self.tau_ref + spiketime
+    
 
 class AdaptiveLIFRate(LIFRate):
     """Adaptive rate version of the LIF neuron model."""

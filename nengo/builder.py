@@ -1065,6 +1065,20 @@ def build_lif(lif, ens, model, config):
 Builder.register_builder(build_lif, nengo.neurons.LIF)
 
 
+def build_perturblif(lif, ens, model, config):
+    model.sig[ens]['voltage'] = Signal(
+        np.zeros(ens.n_neurons), name="%s.voltage" % ens.label)
+    model.sig[ens]['refractory_time'] = Signal(
+        np.zeros(ens.n_neurons), name="%s.refractory_time" % ens.label)
+    model.add_op(SimNeurons(
+        neurons=lif,
+        J=model.sig[ens]['neuron_in'],
+        output=model.sig[ens]['neuron_out'],
+        states=[model.sig[ens]['voltage'], model.sig[ens]['refractory_time']]))
+
+Builder.register_builder(build_lif, nengo.neurons.PerturbLIF)
+
+
 def build_alifrate(alif, ens, model, config):
     model.sig[ens]['adaptation'] = Signal(
         np.zeros(ens.n_neurons), name="%s.adaptation" % ens.label)
