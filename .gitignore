@@ -1,3 +1,5 @@
+*.gitignore
+
 *.py[co]
 .DS_Store
 _build
@@ -14,3 +16,4 @@ log.txt
 .tox
 
 *.class
+*.pdf
