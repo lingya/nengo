@@ -6,11 +6,13 @@ Signatures
 
 f : f(x_i)
     A function that perturbs a scalar voltage, x_i. The function signature 
-    at call is `f(x_i)`. Before use these functions will be 'vectorized' using
-    `np.frompyfunc`.
+    at call is `f(x)`, i.e there is one positional argument. 
+
 
 Note
 ----
+Before use these functions will be 'vectorized' using
+`np.frompyfunc`.
 
 To change keyword parameters use partial() prior to passing to PerturbLIF().
 For example, to set the SD to 1 on white:
@@ -33,7 +35,7 @@ def randomize(x, scale=0.1):
 def white(x, scale=0.1):
     """Bias x with white noise (mean = 0)"""
     return x + np.random.normal(0, scale, 1)[0]
-        
+
 def silent(x, p=0.1):
     """Reset x to 0 with probability p"""
     thresh = np.random.uniform(0,1,1)
@@ -71,13 +73,13 @@ class Oscillator(object):
         self.has_oscillation = np.random.binomial(1, p, N).astype(np.bool)
         
     def __call__(self, x):
-        if self.count == (self.N - 1):
+        if self.count == self.N:
             self.count = 0
             self.w = self.wave.next()
-        self.count += 1  ## offset
         
         if self.has_oscillation[self.count]:
-            return self.w + x
-        else:
-            return x
+            x = self.w + x
 
+        self.count += 1
+
+        return x
