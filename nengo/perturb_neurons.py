@@ -28,14 +28,23 @@ def null(x):
     """Always returns 0"""
     return 0.0
 
-def randomize(x, scale=0.1):
+def randomize(x, scale=0.3):
     """Always returns a random normal value, ignoring x"""
     return np.random.normal(0, scale, 1)[0]
     
-def white(x, scale=0.1):
+def white(x, scale=0.3):
     """Bias x with white noise (mean = 0)"""
     return x + np.random.normal(0, scale, 1)[0]
 
+def exp(x, scale=3):
+    """Bias x with Exponential noise"""
+    return x + np.random.exponential(scale)[0]
+    
+# do 0.5, 2.5 and 5
+def gamma(x, shape=2.5, scale=0.3):
+    """Bias x with Gamma noise"""
+    return x + np.random.gamma(shape, scale, 1)[0]
+    
 def silent(x, p=0.1):
     """Reset x to 0 with probability p"""
     thresh = np.random.uniform(0,1,1)
@@ -68,7 +77,7 @@ class Oscillator(object):
             raise ValueError("N must be greater than 1")
         
         self.count = 0
-
+        
         # Neuron n from N will have a oscillation?
         self.has_oscillation = np.random.binomial(1, p, N).astype(np.bool)
         
