@@ -23,6 +23,9 @@ For example, to set the SD to 1 on white:
 import numpy as np
 from itertools import cycle
 
+def identity(x):
+    """Always return x"""
+    return x
 
 def null(x):
     """Always returns 0"""
@@ -40,7 +43,6 @@ def exp(x, scale=3):
     """Bias x with Exponential noise"""
     return x + np.random.exponential(scale)[0]
     
-# do 0.5, 2.5 and 5
 def gamma(x, shape=2.5, scale=0.3):
     """Bias x with Gamma noise"""
     return x + np.random.gamma(shape, scale, 1)[0]
@@ -60,6 +62,8 @@ class Oscillator(object):
     ----------
     N : int
         Number of neurons to perturb at each time-step
+    p : float
+        The proportion of neurons that will oscillate
     scale : float (default 1)
         Amplitude of the oscillation
     f : float (default 10)
@@ -68,7 +72,7 @@ class Oscillator(object):
         The sampling rate
     """
     
-    def __init__(self, N, p=0.5, scale=0.3, f=1, rate=50):
+    def __init__(self, N, p=0.5, scale=0.1, f=1, rate=50):
         self.wave = cycle(scale * np.sin(f * np.linspace(-np.pi, np.pi, rate)))
         self.w = self.wave.next()
 
