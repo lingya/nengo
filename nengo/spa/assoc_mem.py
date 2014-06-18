@@ -6,6 +6,7 @@ from nengo.spa.module import Module
 from nengo.spa.vocab import Vocabulary
 from nengo.utils.distributions import Uniform
 from nengo.utils.compat import is_iterable
+from nengo.utils.network import with_self
 
 
 class AssociativeMemory(Module):
@@ -182,3 +183,24 @@ class AssociativeMemory(Module):
             if inhibitable:
                 nengo.Connection(self.inhibit, default_vector_gate,
                                  synapse=None, transform=[[-1]])
+
+    @with_self
+    def add_input(self, name, input_vocab, input_scale=1.0):
+        # Handle different vocabulary types
+        if isinstance(input_vocab, Vocabulary):
+            input_vectors = input_vocab.vectors
+        elif is_iterable(input_vocab):
+            input_vectors = np.matrix(input_vocab)
+        else:
+            input_vectors = input_vocab
+
+        input = nengo.Node(size_in=input_vectors.shape[1], label=name)
+
+        if hasattr(self, name):
+            raise NameError('Name "%s" already exists as a node in the'
+                            'associative memory.')
+        else:
+            setattr(self, name, input)
+
+        nengo.Connection(input, self.thresholded_ens_array.input,
+                         synapse=None, transform=input_vectors * input_scale)

@@ -255,6 +255,48 @@ def test_am_default_output_inhibit_utilities_wta(Simulator):
                        atol=.1, rtol=.01)
 
 
+def test_am_multiple_inputs(Simulator):
+    """Add inputs test.
+
+    """
+    rng = np.random.RandomState(1)
+
+    D = 64
+    vocab = Vocabulary(D, rng=rng)
+    vocab.parse('A+B+C+D')
+
+    vocab3 = vocab.create_subset(['D', 'C', 'B', 'A'])
+
+    D2 = int(D / 2)
+    vocab2 = Vocabulary(D2, rng=rng)
+    vocab2.parse('A+B+C+D')
+
+    def input_func(t):
+        if t < 0.5:
+            return vocab.parse('A').v
+        else:
+            return vocab.parse('B').v
+
+    def input_func2(t):
+        return vocab.parse('C').v
+
+    m = nengo.Network('model', seed=123)
+    with m:
+        am = AssociativeMemory(vocab, vocab2, threshold=0.6, input_scale=0.5)
+        am.add_input('input2', vocab3, input_scale=0.5)
+
+        in_node = nengo.Node(output=input_func, label='input')
+        in2_node = nengo.Node(output=input_func2, label='input2')
+        out_node = nengo.Node(size_in=D2, label='output')
+
+        nengo.Connection(in_node, am.input)
+        nengo.Connection(in2_node, am.input2)
+        nengo.Connection(am.output, out_node, synapse=0.03)
+
+    # Build network to test it
+    Simulator(m)
+
+
 if __name__ == '__main__':
     nengo.log(debug=True)
     pytest.main([__file__, '-v'])
