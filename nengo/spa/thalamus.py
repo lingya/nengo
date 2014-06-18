@@ -199,7 +199,7 @@ class Thalamus(Module):
                 label='channel_%d_%s' % (index, target_name))
 
             # inhibit the channel when the action is not chosen
-            inhibit = [[-1]] * (self.neurons_channel_dim * subdim)
+            inhibit = [[-3]] * (self.neurons_channel_dim * subdim)
             for e in channel.ensembles:
                 nengo.Connection(gate, e.neurons, transform=inhibit,
                                  synapse=self.synapse_inhibit)
@@ -238,7 +238,7 @@ class Thalamus(Module):
                 label='cconv_%d_%s' % (index, str(effect)))
 
             # inhibit the channel when the action is not chosen
-            inhibit = [[-1]] * (self.neurons_cconv)
+            inhibit = [[-3]] * (self.neurons_cconv)
             for e in channel.product.ensembles:
                 nengo.Connection(gate, e.neurons, transform=inhibit,
                                  synapse=self.synapse_inhibit)
