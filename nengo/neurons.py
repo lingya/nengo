@@ -135,7 +135,8 @@ class PerturbLIF(_LIFBase):
 
         Parameters
         ----------
-        TODO - Nengo, rest?
+        tau_rc : float
+            Spike time constant
 
         perturb : function(x_i) or None
             A function that takes a scalar and will that scalar
