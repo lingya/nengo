@@ -282,6 +282,7 @@ class SignalView(object):
 
 
 class Signal(SignalView):
+
     """Interpretable, vector-valued quantity within Nengo"""
 
     # Set assert_named_signals True to raise an Exception
@@ -339,6 +340,7 @@ class Signal(SignalView):
 
 
 class SignalDict(dict):
+
     """Map from Signal -> ndarray
 
     This dict subclass ensures that the ndarray values aren't overwritten,
@@ -406,6 +408,7 @@ class SignalDict(dict):
 
 
 class Operator(object):
+
     """Base class for operator instances understood by nengo.Simulator.
 
     The lifetime of a Signal during one simulator timestep:
@@ -496,6 +499,7 @@ class Operator(object):
 
 
 class Reset(Operator):
+
     """Assign a constant value to a Signal."""
 
     def __init__(self, dst, value=0):
@@ -520,6 +524,7 @@ class Reset(Operator):
 
 
 class Copy(Operator):
+
     """Assign the value of one signal to another."""
 
     def __init__(self, dst, src, as_update=False, tag=None):
@@ -575,6 +580,7 @@ def reshape_dot(A, X, Y, tag=None):
 
 
 class DotInc(Operator):
+
     """Increment signal Y by dot(A, X)"""
 
     def __init__(self, A, X, Y, tag=None):
@@ -607,6 +613,7 @@ class DotInc(Operator):
 
 
 class ProdUpdate(Operator):
+
     """Sets Y <- dot(A, X) + B * Y"""
 
     def __init__(self, A, X, B, Y, tag=None):
@@ -642,6 +649,7 @@ class ProdUpdate(Operator):
 
 
 class SimPyFunc(Operator):
+
     """Set signal `output` by some non-linear function of x, possibly t"""
 
     def __init__(self, output, fn, t_in, x):
@@ -677,6 +685,7 @@ class SimPyFunc(Operator):
 
 
 class SimNeurons(Operator):
+
     """Set output to neuron model output for the given input current."""
 
     def __init__(self, neurons, J, output, states=[]):
@@ -701,6 +710,7 @@ class SimNeurons(Operator):
 
 
 class SimFilterSynapse(Operator):
+
     """Simulate a discrete-time LTI system.
 
     Implements a discrete-time LTI system using the difference equation [1]_
@@ -710,6 +720,7 @@ class SimFilterSynapse(Operator):
     ----------
     .. [1] http://en.wikipedia.org/wiki/Digital_filter#Difference_equation
     """
+
     def __init__(self, input, output, num, den):
         self.input = input
         self.output = output
@@ -751,7 +762,9 @@ class SimFilterSynapse(Operator):
 
 
 class SimBCM(Operator):
+
     """Change the transform according to the BCM rule."""
+
     def __init__(self, delta,
                  pre_filtered, post_filtered, theta, learning_rate):
         self.delta = delta
@@ -779,9 +792,11 @@ class SimBCM(Operator):
 
 
 class SimOja(Operator):
+
     """
     Change the transform according to the OJA rule
     """
+
     def __init__(self, transform, delta, pre_filtered, post_filtered,
                  forgetting, learning_rate):
         self.transform = transform
@@ -814,6 +829,7 @@ class SimOja(Operator):
 
 
 class Model(object):
+
     """Output of the Builder, used by the Simulator."""
 
     def __init__(self, dt=0.001, label=None):
@@ -1198,7 +1214,7 @@ def build_probe(probe, model, config):
         probe._initial_val = []
         model.params[probe] = list(probe._initial_val)
     else:
-        test_input  = np.zeros(model.sig[probe]['in'].shape[0])
+        test_input = np.zeros(model.sig[probe]['in'].shape[0])
         dimension = np.asarray(probe.function(test_input)).shape[0]
         probe._initial_val = [[] for _ in range(dimension)]
         model.params[probe] = list(probe._initial_val)
@@ -1446,7 +1462,7 @@ def build_alpha_synapse(synapse, owner, input_signal, model, config):
     if synapse.tau > 0.03 * model.dt:
         a = model.dt / synapse.tau
         ea = np.exp(-a)
-        num, den = [-a*ea + (1 - ea), ea*(a + ea - 1)], [-2 * ea, ea**2]
+        num, den = [-a * ea + (1 - ea), ea * (a + ea - 1)], [-2 * ea, ea ** 2]
     else:
         num, den = [1.], []  # just copy the input
 
