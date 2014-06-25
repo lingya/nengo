@@ -171,6 +171,16 @@ class Choice(Distribution):
 
 
 class SqrtBeta(Distribution):
+    """Distribution of the square root of a Beta distributed random variable.
+
+    Given `n + m` dimensional random unit vectors, the length of subvectors
+    with `m` elements will be distributed according to this distribution.
+
+    Parameters
+    ----------
+    n, m : Number
+        Shape parameters of the distribution.
+    """
     def __init__(self, n, m=1):
         super(SqrtBeta, self).__init__()
         self.n = n
