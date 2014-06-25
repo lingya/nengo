@@ -168,3 +168,14 @@ class Choice(Distribution):
                 raise ValueError("Options must be of dimensionality %d "
                                  "(got %d)" % (d, self.options[i].shape[1]))
         return self.options[i]
+
+
+class SqrtBeta(Distribution):
+    def __init__(self, n, m=1):
+        super(SqrtBeta, self).__init__()
+        self.n = n
+        self.m = m
+
+    def sample(self, num, d=None, rng=np.random):
+        shape = (num,) if d is None else (num, d)
+        return np.sqrt(rng.beta(self.m / 2.0, self.n / 2.0, size=shape))
