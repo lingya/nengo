@@ -208,3 +208,21 @@ class SqrtBeta(Distribution):
         from scipy.special import beta
         return (2 / beta(self.m / 2.0, self.n / 2.0) * x ** (self.m - 1) *
                 (1 - x * x) ** (self.n / 2.0 - 1))
+
+    def cdf(self, x):
+        """Cumulative distribution function.
+
+        Requires Scipy.
+
+        Parameters
+        ----------
+        x : ndarray
+            Evaluation points in [0, 1].
+
+        Returns
+        -------
+        ndarray
+            Probability that `X <= x`.
+        """
+        from scipy.special import betainc
+        return betainc(self.m / 2.0, self.n / 2.0, x * x)
