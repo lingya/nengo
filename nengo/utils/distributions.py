@@ -189,3 +189,22 @@ class SqrtBeta(Distribution):
     def sample(self, num, d=None, rng=np.random):
         shape = (num,) if d is None else (num, d)
         return np.sqrt(rng.beta(self.m / 2.0, self.n / 2.0, size=shape))
+
+    def pdf(self, x):
+        """Probability distribution function.
+
+        Requires Scipy.
+
+        Parameters
+        ----------
+        x : ndarray
+            Evaluation points in [0, 1].
+
+        Returns
+        -------
+        ndarray
+            Probability density at `x`.
+        """
+        from scipy.special import beta
+        return (2 / beta(self.m / 2.0, self.n / 2.0) * x ** (self.m - 1) *
+                (1 - x * x) ** (self.n / 2.0 - 1))
