@@ -15,7 +15,7 @@ class DotProduct(nengo.Network):
     """
 
     def __init__(self, n_neurons, dimensions, radius=1, eval_points=None,
-                 **ens_kwargs):
+                 rng=np.random, **ens_kwargs):
         self.config[nengo.Ensemble].update(ens_kwargs)
         self.A = nengo.Node(size_in=dimensions, label="A")
         self.B = nengo.Node(size_in=dimensions, label="B")
@@ -38,9 +38,8 @@ class DotProduct(nengo.Network):
         scaled_r = radius * res.x
 
         if is_number(eval_points):
-            # FIXME seed cannot be set
             eval_points = Uniform(-scaled_r, scaled_r).sample(
-                (num_eval_points, 2))
+                (num_eval_points, 2), rng=rng)
 
         self.product = EnsembleArray(
             n_neurons, n_ensembles=dimensions, ens_dimensions=2,
