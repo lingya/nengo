@@ -4,6 +4,7 @@ from .basalganglia import BasalGanglia
 from .buffer import Buffer
 from .compare import Compare
 from .cortical import Cortical
+from .dotproduct impor DotProduct
 from .input import Input
 from .memory import Memory
 from .pointer import SemanticPointer
