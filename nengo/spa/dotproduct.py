@@ -38,8 +38,10 @@ class DotProduct(nengo.Network):
         scaled_r = radius * res.x
 
         if is_number(eval_points):
-            eval_points = Uniform(-scaled_r, scaled_r).sample(
-                (num_eval_points, 2), rng=rng)
+            xs = np.linspace(
+                -scaled_r, scaled_r, int(np.sqrt(num_eval_points)))
+            xs, ys = np.meshgrid(xs, xs)
+            eval_points = np.vstack((xs.flat, ys.flat)).T
 
         self.product = EnsembleArray(
             n_neurons, n_ensembles=dimensions, ens_dimensions=2,
