@@ -1,11 +1,10 @@
 import numpy as np
-import scipy.optimize
-from scipy.special import beta, betainc
 
 import nengo
 from nengo.networks.ensemblearray import EnsembleArray
 from nengo.utils.compat import is_number
 from nengo.utils.distributions import SqrtBeta, Uniform
+from nengo.utils.optimization import sp_subvector_optimal_radius
 
 
 class DotProduct(nengo.Network):
@@ -31,11 +30,8 @@ class DotProduct(nengo.Network):
         else:
             num_eval_points = len(eval_points)
 
-        res = scipy.optimize.minimize(
-            lambda x: self._error_estimate(dimensions, num_eval_points, x),
-            0.5)
-
-        scaled_r = radius * res.x
+        scaled_r = radius * sp_subvector_optimal_radius(
+            dimensions, 1, 2, num_eval_points)
 
         if is_number(eval_points):
             xs = np.linspace(
@@ -55,28 +51,3 @@ class DotProduct(nengo.Network):
         nengo.Connection(
             self.product.add_output('product', lambda x: x[0] * x[1]),
             self.output, synapse=None, transform=[dimensions * [1.0]])
-
-    @staticmethod
-    def _in_range_error(num_eval_points, x):
-        return (x / (np.sqrt(num_eval_points) - 1)) ** 2 / 3.0
-
-    @staticmethod
-    def _out_of_range_error(dimensions, num_eval_points, x):
-        dist = SqrtBeta(dimensions - 1)
-        sq_x = x * x
-
-        normalization = 1.0 - dist.cdf(x)
-        b = (dimensions - 1) / 2.0
-        aligned_integral = beta(1.5, b) * (1.0 - betainc(1.5, b, sq_x))
-        cross_integral = beta(1.0, b) * (1.0 - betainc(1.0, b, sq_x))
-
-        numerator = (sq_x * normalization + (
-            aligned_integral - 2.0 * x * cross_integral) / beta(0.5, b))
-        return numerator / normalization
-
-    @classmethod
-    def _error_estimate(cls, dimensions, num_eval_points, x):
-        dist = SqrtBeta(dimensions - 1)
-        return (dist.cdf(x) * cls._in_range_error(num_eval_points, x) +
-                (1.0 - dist.cdf(x)) * cls._out_of_range_error(
-                    dimensions, num_eval_points, x))
