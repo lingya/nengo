@@ -9,9 +9,7 @@ def _normalize(x):
     return x / np.linalg.norm(x)
 
 
-# FIXME: this test is way to slow for a unit test
-# Is there some faster way to test this? Or should we just mark as slow and
-# skip by default?
+@pytest.mark.optional  # Skip test per default, it is too slow
 @pytest.mark.parametrize('d', [4, 32])
 def test_dotproduct(Simulator, d):
     v1 = _normalize(np.random.randn(d))
