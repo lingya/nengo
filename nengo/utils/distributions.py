@@ -180,6 +180,10 @@ class SqrtBeta(Distribution):
     ----------
     n, m : Number
         Shape parameters of the distribution.
+
+    See also
+    --------
+    SubvectorLength
     """
     def __init__(self, n, m=1):
         super(SqrtBeta, self).__init__()
@@ -226,3 +230,22 @@ class SqrtBeta(Distribution):
         """
         from scipy.special import betainc
         return betainc(self.m / 2.0, self.n / 2.0, x * x)
+
+
+class SubvectorLength(SqrtBeta):
+    """Distribution of the length of a subvectors of a unit vector.
+
+    Parameters
+    ----------
+    dimensions : int
+        Dimensionality of the complete unit vector.
+    subdimensions : int, optional
+        Dimensionality of the subvector.
+
+    See also
+    --------
+    SqrtBeta
+    """
+    def __init__(self, dimensions, subdimensions=1):
+        super(SubvectorLength, self).__init__(
+            dimensions - subdimensions, subdimensions)
