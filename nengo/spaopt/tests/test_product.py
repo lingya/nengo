@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 
 import nengo
-from nengo import spaopt as spa
 
 
 def _normalize(x):
@@ -12,6 +11,7 @@ def _normalize(x):
 @pytest.mark.optional  # Skip test per default, it is too slow
 @pytest.mark.parametrize('d', [4, 32])
 def test_dotproduct(Simulator, d):
+    np.random.seed(324)
     v1 = _normalize(np.random.randn(d))
     v2 = _normalize(np.random.randn(d))
 
@@ -20,7 +20,7 @@ def test_dotproduct(Simulator, d):
         in_a = nengo.Node(output=v1)
         in_b = nengo.Node(
             output=lambda t: _normalize(np.sin(t) * v2 + (1 - np.sin(t)) * v1))
-        prod = nengo.spa.DotProduct(int(6400 / d), d, eval_points=1000)
+        prod = nengo.spaopt.DotProduct(int(6400 / d), d)
         result = nengo.Ensemble(
             n_neurons=1, dimensions=1, neuron_type=nengo.Direct())
 
@@ -45,7 +45,7 @@ def test_dotproduct(Simulator, d):
     sim = Simulator(model)
     sim.run(2 * np.pi)
 
-    assert np.max(np.abs(sim.data[probe] - sim.data[dprobe])) < 0.1
+    assert np.max(np.abs(sim.data[probe] - sim.data[dprobe])) < 0.11
 
 if __name__ == '__main__':
     nengo.log(debug=True)
