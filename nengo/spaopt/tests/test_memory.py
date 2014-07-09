@@ -77,9 +77,9 @@ def test_run(Simulator):
     sim.run(0.5)
 
     data = np.dot(sim.data[p], vocab.vectors.T)
-    assert data[100, 0] > 1.5
-    assert data[300, 0] > 1.0
-    assert data[499, 0] > 0.8
+    assert data[100, 0] > 1.0
+    assert data[300, 0] > 0.7
+    assert data[499, 0] > 0.6
 
 
 def test_run_decay(Simulator):
@@ -105,7 +105,7 @@ def test_run_decay(Simulator):
     sim.run(0.3)
 
     data = np.dot(sim.data[p], vocab.vectors.T)
-    assert data[50, 0] > 1.3
+    assert data[50, 0] > 1.0
     assert data[299, 0] < 0.5
 
 

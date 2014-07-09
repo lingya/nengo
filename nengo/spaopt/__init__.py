@@ -7,7 +7,7 @@ from .circularconvolution import CircularConvolution
 from .dotproduct import DotProduct
 from ..spa.cortical import Cortical
 from ..spa.input import Input
-from ..spa.memory import Memory
+from .memory import Memory
 from ..spa.module import Module
 from .product import Product
 from ..spa.utils import similarity
