@@ -20,13 +20,14 @@ def test_dotproduct(Simulator, d):
         in_a = nengo.Node(output=v1)
         in_b = nengo.Node(
             output=lambda t: _normalize(np.sin(t) * v2 + (1 - np.sin(t)) * v1))
-        prod = nengo.spaopt.DotProduct(int(6400 / d), d)
+        prod = nengo.spaopt.Product(int(6400 / d), d)
         result = nengo.Ensemble(
             n_neurons=1, dimensions=1, neuron_type=nengo.Direct())
 
         nengo.Connection(in_a, prod.A)
         nengo.Connection(in_b, prod.B)
-        nengo.Connection(prod.output, result)
+        nengo.Connection(
+            prod.output, result, transform=prod.dot_product_transform())
 
         ddot = nengo.networks.EnsembleArray(
             2, d, 2, neuron_type=nengo.Direct())
