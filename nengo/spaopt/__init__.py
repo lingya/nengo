@@ -1,6 +1,7 @@
 from ..spa import SPA
 from .buffer import Buffer
 from .compare import Compare
+from .circularconvolution import CircularConvolution
 from .dotproduct import DotProduct
 from ..spa.input import Input
 from ..spa.memory import Memory
