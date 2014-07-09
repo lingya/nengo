@@ -1,7 +1,7 @@
 import numpy as np
 
 import nengo
-from nengo.spaopt.dotproduct import DotProduct
+from nengo.spaopt.product import Product
 from nengo.spa.module import Module
 from nengo.utils.compat import range
 
@@ -34,7 +34,7 @@ class Compare(Module):
 
         self.output_scaling = output_scaling
 
-        self.compare = DotProduct(
+        self.compare = Product(
             neurons_per_multiply, dimensions, radius=radius,
             neuron_type=nengo.Diret() if direct else nengo.LIF(),
             label='compare')
@@ -56,5 +56,5 @@ class Compare(Module):
 
         transform = np.array([vocab.parse('YES').v] * vocab.dimensions)
 
-        nengo.Connection(self.compare.product.product, self.output,
+        nengo.Connection(self.compare.output, self.output,
                          transform=transform.T * self.output_scaling)
