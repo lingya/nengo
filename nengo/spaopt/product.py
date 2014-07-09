@@ -1,10 +1,12 @@
 import numpy as np
 
 import nengo
-from nengo.spaopt.unitea import UnitEA
+from nengo.networks.ensemblearray import EnsembleArray
+from nengo.utils.compat import is_number
+from nengo.utils.optimization import sp_subvector_optimal_radius
 
 
-# TODO unittest
+# TODO unittest pure product
 class Product(nengo.Network):
     """Computes the element-wise product of two (scaled) unit vectors.
 
@@ -20,9 +22,25 @@ class Product(nengo.Network):
         self.dimensions = dimensions
         self.radius = radius
 
-        self.product = UnitEA(
-            n_neurons, dimensions, dimensions, 2,
-            radius=radius, eval_points=eval_points)
+        if eval_points is None:
+            eval_points = max(1000, 2 * n_neurons)
+        if is_number(eval_points):
+            n_points = eval_points
+        else:
+            n_points = len(eval_points)
+
+        scaled_r = radius * sp_subvector_optimal_radius(
+            dimensions, 1, 2, n_points)
+
+        if is_number(eval_points):
+            xs = np.linspace(
+                -scaled_r, scaled_r, int(np.sqrt(n_points)))
+            xs, ys = np.meshgrid(xs, xs)
+            eval_points = np.vstack((xs.flat, ys.flat)).T
+
+        self.product = EnsembleArray(
+            n_neurons, n_ensembles=dimensions, ens_dimensions=2,
+            radius=scaled_r, eval_points=eval_points)
 
         nengo.Connection(
             self.A, self.product.input[::2], synapse=None)
