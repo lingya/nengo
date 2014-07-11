@@ -46,8 +46,8 @@ class Compare(Module):
         self.inputs = dict(A=(self.inputA, vocab), B=(self.inputB, vocab))
         self.outputs = dict(default=(self.output, vocab))
 
-        nengo.Connection(self.inputA, self.compare.A)
-        nengo.Connection(self.inputB, self.compare.B)
+        nengo.Connection(self.inputA, self.compare.A, synapse=None)
+        nengo.Connection(self.inputB, self.compare.B, synapse=None)
 
     def on_add(self, spa):
         Module.on_add(self, spa)
@@ -57,4 +57,5 @@ class Compare(Module):
         transform = np.array([vocab.parse('YES').v] * vocab.dimensions)
 
         nengo.Connection(self.compare.output, self.output,
-                         transform=transform.T * self.output_scaling)
+                         transform=transform.T * self.output_scaling,
+                         synapse=None)
