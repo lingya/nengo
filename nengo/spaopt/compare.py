@@ -36,7 +36,7 @@ class Compare(Module):
 
         self.compare = Product(
             neurons_per_multiply, dimensions, radius=radius,
-            neuron_type=nengo.Diret() if direct else nengo.LIF(),
+            neuron_type=nengo.Direct() if direct else nengo.LIF(),
             label='compare')
 
         self.inputA = nengo.Node(size_in=dimensions, label='inputA')
