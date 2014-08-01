@@ -76,7 +76,7 @@ class _Runcom(configparser.SafeConfigParser):
         for section, settings in DEFAULTS.items():
             self.add_section(section)
             for k, v in settings.items():
-                    self.set(section, k, repr(v))
+                    self.set(section, k, str(v))
 
     def reload_rc(self, filenames=None):
         """Resets the currently loaded RC settings and loads new RC files.
