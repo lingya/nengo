@@ -17,13 +17,13 @@ class Memory(Buffer):
     """
 
     def __init__(self, dimensions, subdimensions=16, neurons_per_dimension=50,
-                 synapse=0.01, vocab=None, tau=None, direct=False):
+                 synapse=0.01, vocab=None, tau=None, **ens_kwargs):
         super(Memory, self).__init__(
             dimensions=dimensions,
             subdimensions=subdimensions,
             neurons_per_dimension=neurons_per_dimension,
             vocab=vocab,
-            direct=direct)
+            **ens_kwargs)
 
         if tau is None:
             transform = 1.0

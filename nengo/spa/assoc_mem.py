@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 
 import nengo
 from nengo.networks.ensemblearray import EnsembleArray
@@ -66,7 +67,7 @@ class AssociativeMemory(Module):
                  inhibitable=False, inhibit_scale=1.0, wta_output=False,
                  wta_inhibit_scale=2.0, wta_synapse=0.005,
                  output_utilities=False, output_thresholded_utilities=False,
-                 neuron_type=nengo.LIF(), n_neurons_per_ensemble=10):
+                 n_neurons_per_ensemble=10, **ens_kwargs):
         super(AssociativeMemory, self).__init__()
 
         # If output vocabulary is not specified, use input vocabulary
@@ -104,14 +105,14 @@ class AssociativeMemory(Module):
         ).sample(n_eval_points).reshape(-1, 1)
 
         # Ensemble array parameters
-        ea_params = {'radius': 1.0,
-                     'neuron_type': neuron_type,
-                     'n_neurons': n_neurons_per_ensemble,
-                     'n_ensembles': N,
-                     'intercepts': Uniform(threshold, 1),
-                     'max_rates': Uniform(100, 200),
-                     'encoders': np.ones((n_neurons_per_ensemble, 1)),
-                     'eval_points': eval_points}
+        ea_params = copy.deepcopy(ens_kwargs)
+        ea_params['radius'] = 1.0
+        ea_params['n_neurons'] = n_neurons_per_ensemble
+        ea_params['n_ensembles'] = N
+        ea_params['intercepts'] = Uniform(threshold, 1)
+        ea_params['max_rates'] = Uniform(100, 200)
+        ea_params['encoders'] = np.ones((n_neurons_per_ensemble, 1))
+        ea_params['eval_points'] = eval_points
 
         # Thresholding function
         def threshold_func(x):

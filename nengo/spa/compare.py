@@ -25,7 +25,7 @@ class Compare(Module):
         Whether or not to use direct mode for the neurons
     """
     def __init__(self, dimensions, vocab=None, neurons_per_multiply=200,
-                 output_scaling=1.0, radius=1.0, direct=False):
+                 output_scaling=1.0, radius=1.0, **ens_kwargs):
         super(Compare, self).__init__()
         if vocab is None:
             # use the default vocab for this number of dimensions
@@ -35,8 +35,7 @@ class Compare(Module):
 
         self.compare = nengo.networks.EnsembleArray(
             neurons_per_multiply, dimensions, ens_dimensions=2,
-            neuron_type=nengo.Direct() if direct else nengo.LIF(),
-            label='compare')
+            label='compare', **ens_kwargs)
 
         encoders = np.array([[1, 1], [1, -1], [-1, 1], [-1, -1]],
                             dtype='float') / np.sqrt(2)
