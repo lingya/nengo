@@ -15,14 +15,17 @@ class BasalGanglia(nengo.networks.BasalGanglia, Module):
         The actions to choose between
     input_synapse : float
         The synaptic filter on all input connections
+    bg_kwargs: dictionary
+        Optional parameters to pass to nengo.networks.BasalGanglia constructor
     """
-    def __init__(self, actions, input_synapse=0.002):
+    def __init__(self, actions, input_synapse=0.002, **bg_kwargs):
         self.actions = actions
         self.input_synapse = input_synapse
         self._bias = None
         Module.__init__(self)
         nengo.networks.BasalGanglia.__init__(self,
-                                             dimensions=self.actions.count)
+                                             dimensions=self.actions.count,
+                                             **bg_kwargs)
 
     @property
     def bias(self):
@@ -89,7 +92,7 @@ class BasalGanglia(nengo.networks.BasalGanglia, Module):
             the fixed utility value to add
         """
         with self.spa:
-            nengo.Connection(self.bias, self.input[index:index+1],
+            nengo.Connection(self.bias, self.input[index:index + 1],
                              transform=value, synapse=self.input_synapse)
 
     def add_compare_input(self, index, source1, source2, scale):
@@ -134,10 +137,10 @@ class BasalGanglia(nengo.networks.BasalGanglia, Module):
         # the first transformation, to handle dot(vision*A, B)
         t1 = vocab.parse(source.transform.symbol).get_convolution_matrix()
         # the linear transform to compute the fixed dot product
-        t2 = np.array([vocab.parse(symbol.symbol).v*scale])
+        t2 = np.array([vocab.parse(symbol.symbol).v * scale])
 
         transform = np.dot(t2, t1)
 
         with self.spa:
-            nengo.Connection(output, self.input[index:index+1],
+            nengo.Connection(output, self.input[index:index + 1],
                              transform=transform, synapse=self.input_synapse)

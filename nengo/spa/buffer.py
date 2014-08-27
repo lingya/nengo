@@ -19,11 +19,11 @@ class Buffer(Module):
         Number of neurons in an ensemble will be this*subdimensions
     vocab : Vocabulary, optional
         The vocabulary to use to interpret this vector
-    direct : boolean
-        Whether or not to use direct mode for the neurons
+    ens_kwargs : dictionary
+        Optional parameters to pass to nengo.networks.EnsembleArray constructor
     """
     def __init__(self, dimensions, subdimensions=16, neurons_per_dimension=50,
-                 vocab=None, direct=False):
+                 vocab=None, **ens_kwargs):
         super(Buffer, self).__init__()
 
         if vocab is None:
@@ -45,8 +45,8 @@ class Buffer(Module):
             neurons_per_dimension * subdimensions,
             dimensions // subdimensions,
             ens_dimensions=subdimensions,
-            neuron_type=nengo.Direct() if direct else nengo.LIF(),
-            label='state')
+            label='state',
+            **ens_kwargs)
 
         self.inputs = dict(default=(self.state.input, vocab))
         self.outputs = dict(default=(self.state.output, vocab))

@@ -1,6 +1,7 @@
 import warnings
 
 import numpy as np
+import copy
 
 import nengo
 from nengo.solvers import NnlsL2nz
@@ -31,7 +32,7 @@ class BasalGanglia(nengo.Network):
 
     def __init__(self, dimensions, n_neurons_per_ensemble=100, radius=1.5,
                  tau_ampa=0.002, tau_gaba=0.008, output_weight=-3,
-                 input_bias=0.0, solver=None):
+                 input_bias=0.0, solver=None, **ens_kwargs):
         if solver is None:
             try:
                 # Best, if we have SciPy
@@ -43,12 +44,12 @@ class BasalGanglia(nengo.Network):
                               "may improve BasalGanglia performance.")
                 solver = nengo.Default
         encoders = np.ones((n_neurons_per_ensemble, 1))
-        ea_params = {
-            'n_neurons': n_neurons_per_ensemble,
-            'n_ensembles': dimensions,
-            'radius': radius,
-            'encoders': encoders,
-        }
+
+        ea_params = copy.deepcopy(ens_kwargs)
+        ea_params['n_neurons'] = n_neurons_per_ensemble
+        ea_params['n_ensembles'] = dimensions
+        ea_params['radius'] = radius
+        ea_params['encoders'] = encoders
 
         self.strD1 = EnsembleArray(label="Striatal D1 neurons",
                                    intercepts=Uniform(self.e, 1), **ea_params)
@@ -146,11 +147,11 @@ class Thalamus(nengo.Network):
     (approximately) 1 for the selected action and 0 elsewhere."""
 
     def __init__(self, dimensions, n_neurons_per_ensemble=50, mutual_inhib=1,
-                 threshold=0):
+                 threshold=0, neuron_type=nengo.LIF()):
         self.actions = EnsembleArray(n_neurons_per_ensemble, dimensions,
                                      intercepts=Uniform(threshold, 1),
                                      encoders=[[1]] * n_neurons_per_ensemble,
-                                     label="actions")
+                                     label="actions", neuron_type=neuron_type)
 
         self.input = self.actions.input
         self.output = self.actions.output

@@ -40,6 +40,8 @@ class Thalamus(nengo.networks.Thalamus, Module):
         Minimum value for gating neurons
     synapse_to-gate : float
         Synaptic filter for controlling a gate
+    thal_kwargs: dictionary
+        Optional parameters to pass to nengo.networks.Thalamus constructor
     """
     def __init__(self, bg, neurons_action=50, threshold_action=0.2,
                  mutual_inhibit=1, route_inhibit=3,
@@ -47,7 +49,8 @@ class Thalamus(nengo.networks.Thalamus, Module):
                  neurons_channel_dim=50, subdim_channel=16,
                  synapse_channel=0.01,
                  neurons_cconv=200,
-                 neurons_gate=40, threshold_gate=0.3, synapse_to_gate=0.002):
+                 neurons_gate=40, threshold_gate=0.3, synapse_to_gate=0.002,
+                 **thal_kwargs):
 
         self.bg = bg
         self.neurons_action = neurons_action
@@ -73,7 +76,8 @@ class Thalamus(nengo.networks.Thalamus, Module):
             self, self.bg.actions.count,
             n_neurons_per_ensemble=self.neurons_action,
             mutual_inhib=self.mutual_inhibit,
-            threshold=self.threshold_action)
+            threshold=self.threshold_action,
+            **thal_kwargs)
 
     def on_add(self, spa):
         Module.on_add(self, spa)
