@@ -4,7 +4,6 @@ from ..spa.basalganglia import BasalGanglia  # TODO
 from .buffer import Buffer
 from .compare import Compare
 from .circularconvolution import CircularConvolution
-from .dotproduct import DotProduct
 from ..spa.cortical import Cortical
 from ..spa.input import Input
 from .memory import Memory
