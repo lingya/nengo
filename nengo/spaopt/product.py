@@ -15,7 +15,6 @@ class Product(nengo.Network):
 
     def __init__(self, n_neurons, dimensions, radius=1.0, eval_points=None,
                  **ens_kwargs):
-        self.config[nengo.Ensemble].update(ens_kwargs)
         self.A = nengo.Node(size_in=dimensions, label="A")
         self.B = nengo.Node(size_in=dimensions, label="B")
         self.output = nengo.Node(size_in=dimensions, label="output")
@@ -40,7 +39,7 @@ class Product(nengo.Network):
 
         self.product = EnsembleArray(
             n_neurons, n_ensembles=dimensions, ens_dimensions=2,
-            radius=scaled_r, eval_points=eval_points)
+            radius=scaled_r, eval_points=eval_points, **ens_kwargs)
 
         nengo.Connection(
             self.A, self.product.input[::2], synapse=None)

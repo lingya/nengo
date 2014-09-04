@@ -1,5 +1,8 @@
 """Utilities for optimizing neuron populations and networks."""
 
+from __future__ import absolute_import
+
+import numpy as np
 from scipy.special import beta, betainc
 
 from nengo.utils.distributions import SqrtBeta
@@ -31,7 +34,7 @@ def sp_subvector_optimal_radius(
         lambda x: sp_subvector_error(
             sp_dimensions, sp_subdimensions, ens_dimensions, eval_points, x),
         0.5)
-    return res.x
+    return np.asscalar(res.x)
 
 
 def sp_subvector_error(

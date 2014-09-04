@@ -74,7 +74,7 @@ class CircularConvolution(nengo.Network):
     """
 
     def __init__(self, n_neurons, dimensions, invert_a=False, invert_b=False,
-                 radius=1, encoders=None, **ens_kwargs):
+                 radius=1, **ens_kwargs):
         self.dimensions = dimensions
         self.invert_a = invert_a
         self.invert_b = invert_b
@@ -84,7 +84,6 @@ class CircularConvolution(nengo.Network):
         self.product = Product(n_neurons,
                                self.transform_out.shape[1],
                                radius=radius,
-                               encoders=encoders,
                                label="conv",
                                **ens_kwargs)
         self.output = nengo.Node(size_in=dimensions, label="output")

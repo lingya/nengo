@@ -17,8 +17,6 @@ class EnsembleArray(nengo.Network):
                 "To set the number of ensembles, use 'n_ensembles'. To set "
                 "the number of dimensions per ensemble, use 'ens_dimensions'.")
 
-        self.config[nengo.Ensemble].update(ens_kwargs)
-
         label_prefix = "" if label is None else label + "_"
 
         self.n_neurons = n_neurons
@@ -37,7 +35,7 @@ class EnsembleArray(nengo.Network):
         for i in range(n_ensembles):
             e = nengo.Ensemble(
                 n_neurons, self.dimensions_per_ensemble,
-                label=label_prefix + str(i))
+                label=label_prefix + str(i), **ens_kwargs)
 
             nengo.Connection(self.input[i * ens_dimensions:
                                         (i + 1) * ens_dimensions],
