@@ -13,20 +13,20 @@ class Product(nengo.Network):
     Requires Scipy.
     """
 
-    def __init__(self, n_neurons, dimensions, radius=1.0, eval_points=None,
-                 encoders=nengo.Default, **ens_kwargs):
+    def __init__(self, n_neurons, dimensions, radius=1.0,
+                n_eval_points=nengo.Default, eval_points=nengo.Default,
+                encoders=nengo.Default, **ens_kwargs):
         self.A = nengo.Node(size_in=dimensions, label="A")
         self.B = nengo.Node(size_in=dimensions, label="B")
         self.output = nengo.Node(size_in=dimensions, label="output")
         self.dimensions = dimensions
         self.radius = radius
 
-        if eval_points is None:
-            eval_points = max(1000, 2 * n_neurons)
-        if is_number(eval_points):
-            n_points = eval_points
-        else:
-            n_points = len(eval_points)
+        if n_eval_points is nengo.Default:
+            try:
+                n_eval_points = len(eval_points)
+            except (AttributeError, TypeError):
+                n_eval_points = max(1000, 2 * n_neurons)
 
         if encoders is nengo.Default:
             encoders = np.tile(
@@ -34,18 +34,18 @@ class Product(nengo.Network):
                 ((n_neurons // 4) + 1, 1))[:n_neurons]
 
         scaled_r = radius * sp_subvector_optimal_radius(
-            dimensions, 1, 2, n_points)
+            dimensions, 1, 2, n_eval_points)
 
         if is_number(eval_points):
             xs = np.linspace(
-                -scaled_r, scaled_r, int(np.sqrt(n_points)))
+                -scaled_r, scaled_r, int(np.sqrt(n_eval_points)))
             xs, ys = np.meshgrid(xs, xs)
             eval_points = np.vstack((xs.flat, ys.flat)).T
 
         self.product = EnsembleArray(
             n_neurons, n_ensembles=dimensions, ens_dimensions=2,
-            radius=scaled_r, encoders=encoders, eval_points=eval_points,
-            **ens_kwargs)
+            radius=scaled_r, encoders=encoders, n_eval_points=n_eval_points,
+            eval_points=eval_points, **ens_kwargs)
 
         nengo.Connection(
             self.A, self.product.input[::2], synapse=None)
