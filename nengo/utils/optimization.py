@@ -21,6 +21,12 @@ def sp_subvector_optimal_radius(
         Dimensionality of the complete semantic pointer/unit vector.
     subdimensions : int
         Dimensionality of the subvectors represented by the ensembles.
+    ens_dimensions : int
+        Dimensionality of the ensemble. Usually this is the same as
+        `subdimensions`. An exception are multiplications where `subdimensions`
+        is typically 1, but each ensemble represents 2 independent dimensions
+        of two different vectors. In that case `ens_dimensions` should be set
+        to 2.
     eval_points : int
         Number of evaluation points used for the representing ensembles.
 
