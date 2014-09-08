@@ -39,7 +39,7 @@ def sp_subvector_optimal_radius(
     res = scipy.optimize.minimize(
         lambda x: sp_subvector_error(
             sp_dimensions, sp_subdimensions, ens_dimensions, eval_points, x),
-        0.5)
+        0.0001)
     return np.asscalar(res.x)
 
 
