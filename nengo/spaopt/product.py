@@ -13,9 +13,10 @@ class Product(nengo.Network):
     Requires Scipy.
     """
 
-    def __init__(self, n_neurons, dimensions, radius=1.0,
-                n_eval_points=nengo.Default, eval_points=nengo.Default,
-                encoders=nengo.Default, **ens_kwargs):
+    def __init__(
+            self, n_neurons, dimensions, radius=1.0,
+            n_eval_points=nengo.Default, eval_points=nengo.Default,
+            encoders=nengo.Default, **ens_kwargs):
         self.A = nengo.Node(size_in=dimensions, label="A")
         self.B = nengo.Node(size_in=dimensions, label="B")
         self.output = nengo.Node(size_in=dimensions, label="output")
@@ -37,10 +38,12 @@ class Product(nengo.Network):
             dimensions, 1, 2, n_eval_points)
 
         if is_number(eval_points):
-            xs = np.linspace(
-                -scaled_r, scaled_r, int(np.sqrt(n_eval_points)))
+            xs = np.linspace(-scaled_r, scaled_r, int(np.sqrt(n_eval_points)))
             xs, ys = np.meshgrid(xs, xs)
             eval_points = np.vstack((xs.flat, ys.flat)).T
+            eval_points = np.dot(np.array(
+                [[np.cos(np.pi/4), -np.sin(np.pi/4)],
+                 [np.sin(np.pi/4), np.cos(np.pi/4)]]), eval_points.T).T
 
         self.product = EnsembleArray(
             n_neurons, n_ensembles=dimensions, ens_dimensions=2,
