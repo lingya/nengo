@@ -5,9 +5,10 @@ Common templates for constructing nodes that can communicate through ROS
 
 from nengo.objects import Node
 import rospy
+import tf
 
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Wrench, Quaternion, Twist
+from geometry_msgs.msg import Wrench, Quaternion, Twist, PoseStamped
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
 import json
@@ -182,7 +183,7 @@ class MotionXYWNode( RosPubNode ):
   """
   
   #TODO: add optional weights and transform function for input
-  def __init__( self, name, topic )
+  def __init__( self, name, topic ):
     """
     Parameters
     ----------
@@ -215,7 +216,8 @@ class OdometryNode( RosSubNode ):
   #TODO: add optional weights and transform function for output
   #TODO: need to come up with a better way of specifying 'attributes' as well as
   #      a better name for this parameter
-  def __init__( self, name, topic, attributes ):
+  def __init__( self, name, topic, attributes=[1,1,1,1,1,1,1,1,1,1,1,1], 
+                use_quaternion=False ):
     """
     Parameters
     ----------
@@ -224,14 +226,14 @@ class OdometryNode( RosSubNode ):
     topic : str
         The name of the ROS topic that is being subscribed to
     attributes : list
-        List of boolean representing the which dimensions of the Odometry message
-        are being published. All others will be left as zero.
+        List of boolean representing which dimensions of the Odometry message
+        are being subscribed to. All others will be ignored.
     """
 
     self.attributes = attributes
     self.dimensions = attributes.count( True )
 
-    def fn( data ):
+    def fn_quaternion( data ):
       rval = [0] * self.dimensions
 
       index = 0
@@ -256,7 +258,6 @@ class OdometryNode( RosSubNode ):
         rval[index] = data.twist.twist.linear.z
         index += 1
 
-      # FIXME: ROS outputs orientation in quaternions, need to account for this
       if self.attributes[ 6 ]:
         rval[index] = data.pose.pose.orientation.x
         index += 1
@@ -281,12 +282,169 @@ class OdometryNode( RosSubNode ):
         index += 1
       
       return rval
+    
+    def fn_euler( data ):
+      rval = [0] * self.dimensions
 
-    self.fn = fn
+      index = 0
+
+      if self.attributes[ 0 ]:
+        rval[index] = data.pose.pose.position.x
+        index += 1
+      if self.attributes[ 1 ]:
+        rval[index] = data.pose.pose.position.y
+        index += 1
+      if self.attributes[ 2 ]:
+        rval[index] = data.pose.pose.position.z
+        index += 1
+
+      if self.attributes[ 3 ]:
+        rval[index] = data.twist.twist.linear.x
+        index += 1
+      if self.attributes[ 4 ]:
+        rval[index] = data.twist.twist.linear.y
+        index += 1
+      if self.attributes[ 5 ]:
+        rval[index] = data.twist.twist.linear.z
+        index += 1
+
+      x = data.pose.pose.orientation.x
+      y = data.pose.pose.orientation.y
+      z = data.pose.pose.orientation.z
+      w = data.pose.pose.orientation.w
+
+      quaternion = ( x,y,z,w ) 
+      euler = tf.transformations.euler_from_quaternion( quaternion )
+      
+      if self.attributes[ 6 ]:
+        rval[index] = euler[0]
+        index += 1
+      if self.attributes[ 7 ]:
+        rval[index] = euler[1]
+        index += 1
+      if self.attributes[ 8 ]:
+        rval[index] = euler[2]
+        index += 1
+
+      if self.attributes[ 9 ]:
+        rval[index] = data.twist.twist.angular.x
+        index += 1
+      if self.attributes[ 10 ]:
+        rval[index] = data.twist.twist.angular.y
+        index += 1
+      if self.attributes[ 11 ]:
+        rval[index] = data.twist.twist.angular.z
+        index += 1
+      
+      return rval
+
+    if use_quaternion:
+      self.fn = fn_quaternion
+    else:
+      self.fn = fn_euler
 
     super( OdometryNode, self ).__init__( name=name, topic=topic,
                                           dimensions=self.dimensions,
                                           msg_type=Odometry, trans_fnc=self.fn )
+
+class PoseNode( RosSubNode ):
+  """
+  This node reads pose data
+  """
+  
+  #TODO: add optional weights and transform function for output
+  #TODO: need to come up with a better way of specifying 'attributes' as well as
+  #      a better name for this parameter
+  def __init__( self, name, topic, attributes=[1,1,1,1,1,1,], 
+                use_quaternion=False ):
+    """
+    Parameters
+    ----------
+    name : str
+        An arbitrary name for the object
+    topic : str
+        The name of the ROS topic that is being subscribed to
+    attributes : list
+        List of boolean representing which dimensions of the Pose message
+        are being subscribed to. All others will be ignored.
+    """
+
+    self.attributes = attributes
+    self.dimensions = attributes.count( True )
+
+    def fn_quaternion( data ):
+      rval = [0] * self.dimensions
+
+      index = 0
+
+      if self.attributes[ 0 ]:
+        rval[index] = data.pose.position.x
+        index += 1
+      if self.attributes[ 1 ]:
+        rval[index] = data.pose.position.y
+        index += 1
+      if self.attributes[ 2 ]:
+        rval[index] = data.pose.position.z
+        index += 1
+
+      if self.attributes[ 3 ]:
+        rval[index] = data.pose.orientation.x
+        index += 1
+      if self.attributes[ 4 ]:
+        rval[index] = data.pose.orientation.y
+        index += 1
+      if self.attributes[ 5 ]:
+        rval[index] = data.pose.orientation.z
+        index += 1
+      if self.attributes[ 6 ]:
+        rval[index] = data.pose.orientation.w
+        index += 1
+      
+      return rval
+    
+    def fn_euler( data ):
+      rval = [0] * self.dimensions
+
+      index = 0
+
+      if self.attributes[ 0 ]:
+        rval[index] = data.pose.pose.position.x
+        index += 1
+      if self.attributes[ 1 ]:
+        rval[index] = data.pose.pose.position.y
+        index += 1
+      if self.attributes[ 2 ]:
+        rval[index] = data.pose.pose.position.z
+        index += 1
+
+      x = data.pose.pose.orientation.x
+      y = data.pose.pose.orientation.y
+      z = data.pose.pose.orientation.z
+      w = data.pose.pose.orientation.w
+
+      quaternion = ( x,y,z,w ) 
+      euler = tf.transformations.euler_from_quaternion( quaternion )
+      
+      if self.attributes[ 3 ]:
+        rval[index] = euler[0]
+        index += 1
+      if self.attributes[ 4 ]:
+        rval[index] = euler[1]
+        index += 1
+      if self.attributes[ 5 ]:
+        rval[index] = euler[2]
+        index += 1
+      
+      return rval
+
+    if use_quaternion:
+      self.fn = fn_quaternion
+    else:
+      self.fn = fn_euler
+
+    super( PoseNode, self ).__init__( name=name, topic=topic,
+                                      dimensions=self.dimensions,
+                                      msg_type=PoseStamped, trans_fnc=self.fn )
 
 class RotorcraftAttitudeNode( RosPubNode ):
   """
