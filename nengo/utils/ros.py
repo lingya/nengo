@@ -96,7 +96,7 @@ class ForceTorqueNode( RosPubNode ):
   
   #TODO: add optional weights and transform function for input
   def __init__( self, name, topic, 
-                attributes=[True, True, True, True, True, True] ):
+                mask=[True, True, True, True, True, True] ):
     """
     Parameters
     ----------
@@ -104,7 +104,7 @@ class ForceTorqueNode( RosPubNode ):
         An arbitrary name for the object
     topic : str
         The name of the ROS topic that is being published
-    attributes : list
+    mask : list
         List of boolean representing the which dimensions of the Wrench message
         are being published. All others will be left as zero.
         For Example, [True, False, False, False, False, True] will publish the
@@ -114,28 +114,28 @@ class ForceTorqueNode( RosPubNode ):
           [force.x, force.y, force.z, torque.x, torque.y, torque.z]
     """
 
-    self.attributes = attributes
-    self.dimensions = attributes.count( True )
+    self.mask = mask
+    self.dimensions = mask.count( True )
 
     def fn( values ):
       wrench = Wrench()
       index = 0
-      if self.attributes[0]:
+      if self.mask[0]:
         wrench.force.x = values[index]
         index += 1
-      if self.attributes[1]:
+      if self.mask[1]:
         wrench.force.y = values[index]
         index += 1
-      if self.attributes[2]:
+      if self.mask[2]:
         wrench.force.z = values[index]
         index += 1
-      if self.attributes[3]:
+      if self.mask[3]:
         wrench.torque.x = values[index]
         index += 1
-      if self.attributes[4]:
+      if self.mask[4]:
         wrench.torque.y = values[index]
         index += 1
-      if self.attributes[5]:
+      if self.mask[5]:
         wrench.torque.z = values[index]
         index += 1
       return wrench
@@ -214,9 +214,9 @@ class OdometryNode( RosSubNode ):
   """
   
   #TODO: add optional weights and transform function for output
-  #TODO: need to come up with a better way of specifying 'attributes' as well as
+  #TODO: need to come up with a better way of specifying 'mask' as well as
   #      a better name for this parameter
-  def __init__( self, name, topic, attributes=[1,1,1,1,1,1,1,1,1,1,1,1], 
+  def __init__( self, name, topic, mask=[1,1,1,1,1,1,1,1,1,1,1,1], 
                 use_quaternion=False ):
     """
     Parameters
@@ -225,59 +225,59 @@ class OdometryNode( RosSubNode ):
         An arbitrary name for the object
     topic : str
         The name of the ROS topic that is being subscribed to
-    attributes : list
+    mask : list
         List of boolean representing which dimensions of the Odometry message
         are being subscribed to. All others will be ignored.
     """
 
-    self.attributes = attributes
-    self.dimensions = attributes.count( True )
+    self.mask = mask
+    self.dimensions = mask.count( True )
 
     def fn_quaternion( data ):
       rval = [0] * self.dimensions
 
       index = 0
 
-      if self.attributes[ 0 ]:
+      if self.mask[ 0 ]:
         rval[index] = data.pose.pose.position.x
         index += 1
-      if self.attributes[ 1 ]:
+      if self.mask[ 1 ]:
         rval[index] = data.pose.pose.position.y
         index += 1
-      if self.attributes[ 2 ]:
+      if self.mask[ 2 ]:
         rval[index] = data.pose.pose.position.z
         index += 1
 
-      if self.attributes[ 3 ]:
+      if self.mask[ 3 ]:
         rval[index] = data.twist.twist.linear.x
         index += 1
-      if self.attributes[ 4 ]:
+      if self.mask[ 4 ]:
         rval[index] = data.twist.twist.linear.y
         index += 1
-      if self.attributes[ 5 ]:
+      if self.mask[ 5 ]:
         rval[index] = data.twist.twist.linear.z
         index += 1
 
-      if self.attributes[ 6 ]:
+      if self.mask[ 6 ]:
         rval[index] = data.pose.pose.orientation.x
         index += 1
-      if self.attributes[ 7 ]:
+      if self.mask[ 7 ]:
         rval[index] = data.pose.pose.orientation.y
         index += 1
-      if self.attributes[ 8 ]:
+      if self.mask[ 8 ]:
         rval[index] = data.pose.pose.orientation.z
         index += 1
-      if self.attributes[ 9 ]:
+      if self.mask[ 9 ]:
         rval[index] = data.pose.pose.orientation.w
         index += 1
 
-      if self.attributes[ 10 ]:
+      if self.mask[ 10 ]:
         rval[index] = data.twist.twist.angular.x
         index += 1
-      if self.attributes[ 11 ]:
+      if self.mask[ 11 ]:
         rval[index] = data.twist.twist.angular.y
         index += 1
-      if self.attributes[ 12 ]:
+      if self.mask[ 12 ]:
         rval[index] = data.twist.twist.angular.z
         index += 1
       
@@ -288,23 +288,23 @@ class OdometryNode( RosSubNode ):
 
       index = 0
 
-      if self.attributes[ 0 ]:
+      if self.mask[ 0 ]:
         rval[index] = data.pose.pose.position.x
         index += 1
-      if self.attributes[ 1 ]:
+      if self.mask[ 1 ]:
         rval[index] = data.pose.pose.position.y
         index += 1
-      if self.attributes[ 2 ]:
+      if self.mask[ 2 ]:
         rval[index] = data.pose.pose.position.z
         index += 1
 
-      if self.attributes[ 3 ]:
+      if self.mask[ 3 ]:
         rval[index] = data.twist.twist.linear.x
         index += 1
-      if self.attributes[ 4 ]:
+      if self.mask[ 4 ]:
         rval[index] = data.twist.twist.linear.y
         index += 1
-      if self.attributes[ 5 ]:
+      if self.mask[ 5 ]:
         rval[index] = data.twist.twist.linear.z
         index += 1
 
@@ -316,23 +316,23 @@ class OdometryNode( RosSubNode ):
       quaternion = ( x,y,z,w ) 
       euler = tf.transformations.euler_from_quaternion( quaternion )
       
-      if self.attributes[ 6 ]:
+      if self.mask[ 6 ]:
         rval[index] = euler[0]
         index += 1
-      if self.attributes[ 7 ]:
+      if self.mask[ 7 ]:
         rval[index] = euler[1]
         index += 1
-      if self.attributes[ 8 ]:
+      if self.mask[ 8 ]:
         rval[index] = euler[2]
         index += 1
 
-      if self.attributes[ 9 ]:
+      if self.mask[ 9 ]:
         rval[index] = data.twist.twist.angular.x
         index += 1
-      if self.attributes[ 10 ]:
+      if self.mask[ 10 ]:
         rval[index] = data.twist.twist.angular.y
         index += 1
-      if self.attributes[ 11 ]:
+      if self.mask[ 11 ]:
         rval[index] = data.twist.twist.angular.z
         index += 1
       
@@ -353,9 +353,9 @@ class PoseNode( RosSubNode ):
   """
   
   #TODO: add optional weights and transform function for output
-  #TODO: need to come up with a better way of specifying 'attributes' as well as
+  #TODO: need to come up with a better way of specifying 'mask' as well as
   #      a better name for this parameter
-  def __init__( self, name, topic, attributes=[1,1,1,1,1,1,], 
+  def __init__( self, name, topic, mask=[1,1,1,1,1,1,], 
                 use_quaternion=False ):
     """
     Parameters
@@ -364,39 +364,39 @@ class PoseNode( RosSubNode ):
         An arbitrary name for the object
     topic : str
         The name of the ROS topic that is being subscribed to
-    attributes : list
+    mask : list
         List of boolean representing which dimensions of the Pose message
         are being subscribed to. All others will be ignored.
     """
 
-    self.attributes = attributes
-    self.dimensions = attributes.count( True )
+    self.mask = mask
+    self.dimensions = mask.count( True )
 
     def fn_quaternion( data ):
       rval = [0] * self.dimensions
 
       index = 0
 
-      if self.attributes[ 0 ]:
+      if self.mask[ 0 ]:
         rval[index] = data.pose.position.x
         index += 1
-      if self.attributes[ 1 ]:
+      if self.mask[ 1 ]:
         rval[index] = data.pose.position.y
         index += 1
-      if self.attributes[ 2 ]:
+      if self.mask[ 2 ]:
         rval[index] = data.pose.position.z
         index += 1
 
-      if self.attributes[ 3 ]:
+      if self.mask[ 3 ]:
         rval[index] = data.pose.orientation.x
         index += 1
-      if self.attributes[ 4 ]:
+      if self.mask[ 4 ]:
         rval[index] = data.pose.orientation.y
         index += 1
-      if self.attributes[ 5 ]:
+      if self.mask[ 5 ]:
         rval[index] = data.pose.orientation.z
         index += 1
-      if self.attributes[ 6 ]:
+      if self.mask[ 6 ]:
         rval[index] = data.pose.orientation.w
         index += 1
       
@@ -407,31 +407,31 @@ class PoseNode( RosSubNode ):
 
       index = 0
 
-      if self.attributes[ 0 ]:
-        rval[index] = data.pose.pose.position.x
+      if self.mask[ 0 ]:
+        rval[index] = data.pose.position.x
         index += 1
-      if self.attributes[ 1 ]:
-        rval[index] = data.pose.pose.position.y
+      if self.mask[ 1 ]:
+        rval[index] = data.pose.position.y
         index += 1
-      if self.attributes[ 2 ]:
-        rval[index] = data.pose.pose.position.z
+      if self.mask[ 2 ]:
+        rval[index] = data.pose.position.z
         index += 1
 
-      x = data.pose.pose.orientation.x
-      y = data.pose.pose.orientation.y
-      z = data.pose.pose.orientation.z
-      w = data.pose.pose.orientation.w
+      x = data.pose.orientation.x
+      y = data.pose.orientation.y
+      z = data.pose.orientation.z
+      w = data.pose.orientation.w
 
       quaternion = ( x,y,z,w ) 
       euler = tf.transformations.euler_from_quaternion( quaternion )
       
-      if self.attributes[ 3 ]:
+      if self.mask[ 3 ]:
         rval[index] = euler[0]
         index += 1
-      if self.attributes[ 4 ]:
+      if self.mask[ 4 ]:
         rval[index] = euler[1]
         index += 1
-      if self.attributes[ 5 ]:
+      if self.mask[ 5 ]:
         rval[index] = euler[2]
         index += 1
       
