@@ -10,6 +10,7 @@ from collections import Mapping
 import logging
 
 import numpy as np
+import time
 
 from nengo.builder import Model, Builder, SignalDict
 from nengo.utils.graphs import toposort
@@ -53,7 +54,8 @@ class ProbeDict(Mapping):
 class Simulator(object):
     """Reference simulator for Nengo models."""
 
-    def __init__(self, network, dt=0.001, seed=None, model=None):
+    def __init__(self, network, dt=0.001, seed=None, model=None,
+                 fixed_time=False):
         """Initialize the simulator with a network and (optionally) a model.
 
         Most of the time, you will pass in a network and sometimes a dt::
@@ -119,6 +121,7 @@ class Simulator(object):
         self._steps = [node.make_step(self.signals, self.dt)
                        for node in self._step_order]
 
+        self.fixed_time = fixed_time
         self.n_steps = 0
 
         # Add built states to the probe dictionary
@@ -153,7 +156,10 @@ class Simulator(object):
         steps = int(np.round(float(time_in_seconds) / self.dt))
         logger.debug("Running %s for %f seconds, or %d steps",
                      self.model.label, time_in_seconds, steps)
-        self.run_steps(steps)
+        if self.fixed_time:
+            self.run_fixed_time(steps)
+        else:
+            self.run_steps(steps)
 
     def run_steps(self, steps):
         """Simulate for the given number of `dt` steps."""
@@ -161,6 +167,25 @@ class Simulator(object):
             if i % 1000 == 0:
                 logger.debug("Step %d", i)
             self.step()
+
+    def run_fixed_time(self, steps):
+        """Simulate for the given number of `dt` steps."""
+        tol = 0.0001 #TODO: make sure this number is reasonable
+        t_start = time.time()
+        for i in xrange(steps):
+            t_current = time.time()
+
+            # What the current time should be, with a small tolerance
+            t_required = self.model.dt * i + t_start - tol
+
+            while t_required - t_current  > 0:
+                time.sleep(1e-5) # Small sleep to keep the scheduler happy
+                t_current = time.time()
+
+            if i % 1000 == 0:
+                logger.debug("Step %d", i)
+            self.step()
+
 
     def trange(self, dt=None):
         dt = self.dt if dt is None else dt
