@@ -203,7 +203,7 @@ class Config(object):
         for config in reversed(cls.context):
 
             # If a default has been set for this config, return it
-            if config[nengo_cls] in desc:
+            if nengo_cls in config.params and config[nengo_cls] in desc:
                 return getattr(config[nengo_cls], param)
 
         # Otherwise, return the param default

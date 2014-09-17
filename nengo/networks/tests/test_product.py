@@ -10,11 +10,12 @@ from nengo.utils.testing import Plotter
 def test_sine_waves(Simulator, nl):
     radius = 2
     dim = 5
-    product = nengo.networks.Product(
-        200, dim, radius, neuron_type=nl(), seed=63)
+    product = nengo.Network(seed=63)
+    product.config[nengo.Ensemble].neuron_type = nl()
+    product = nengo.networks.Product(200, dim, radius, net=product)
 
-    func_A = lambda t: np.sqrt(radius)*np.sin(np.arange(1, dim+1)*2*np.pi*t)
-    func_B = lambda t: np.sqrt(radius)*np.sin(np.arange(dim, 0, -1)*2*np.pi*t)
+    func_A = lambda t: radius*np.sin(np.arange(1, dim+1)*2*np.pi*t)
+    func_B = lambda t: radius*np.sin(np.arange(dim, 0, -1)*2*np.pi*t)
     pstc = 0.003
     with product:
         input_A = nengo.Node(func_A)
@@ -40,7 +41,7 @@ def test_sine_waves(Simulator, nl):
         plt.savefig('test_product.test_sine_waves.pdf')
         plt.close()
 
-    assert rmse(AB[:len(offset), :], sim.data[p][offset, :]) < 0.3
+    assert rmse(AB[:len(offset), :], sim.data[p][offset, :]) < 0.36
 
 
 if __name__ == "__main__":

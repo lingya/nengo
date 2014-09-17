@@ -7,7 +7,7 @@ from nengo.utils.testing import Plotter
 
 
 def test_inputgatedmemory(Simulator):
-    with nengo.Network(seed=123) as net:
+    with nengo.Network(seed=124) as net:
         test_input = nengo.Node(piecewise({0.0: 0, 0.3: 0.5, 1.0: 0}))
 
         gate_input = nengo.Node(piecewise({0.0: 0, 0.8: 1}))
