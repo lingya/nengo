@@ -1,5 +1,3 @@
-import numpy as np
-
 import nengo
 from nengo.networks import EnsembleArray
 
@@ -22,17 +20,17 @@ class InputGatedMemory(nengo.Network):
                                      **mem_args)
             nengo.Connection(self.mem.output, self.mem.input,
                              synapse=mem_synapse,
-                             transform=np.eye(dimensions) * fdbk_scale)
+                             transform=fdbk_scale)
 
             # calculate difference between stored value and input
             self.diff = EnsembleArray(n_neurons, dimensions, label="diff")
             nengo.Connection(self.input, self.diff.input, synapse=None)
             nengo.Connection(self.mem.output, self.diff.input,
-                             transform=np.eye(dimensions) * -1)
+                             transform=-1.0)
 
             # feed difference into integrator
             nengo.Connection(self.diff.output, self.mem.input,
-                             transform=np.eye(dimensions) * difference_gain,
+                             transform=difference_gain,
                              synapse=mem_synapse)
 
             # gate difference (if gate==0, update stored value,
@@ -89,7 +87,7 @@ class FeedbackGatedMemory(nengo.Network):
             nengo.Connection(self.mem.output, self.fdbk.input,
                              synapse=fdbk_synapse - conn_synapse)
             nengo.Connection(self.fdbk.output, self.mem.input,
-                             transform=np.eye(dimensions) * fdbk_scale,
+                             transform=fdbk_scale,
                              synapse=conn_synapse)
 
             # Connection from input to in_gate, and from in_gate to mem

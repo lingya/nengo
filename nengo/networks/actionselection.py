@@ -128,9 +128,9 @@ def BasalGanglia(dimensions, n_neurons_per_ensemble=100,
         strD2_output = net.strD2.add_output('func_str', Weights.str_func)
         with gaba_config:
             nengo.Connection(strD1_output, net.gpi.input,
-                             transform=-np.eye(dimensions) * Weights.wm)
+                             transform=-Weights.wm)
             nengo.Connection(strD2_output, net.gpe.input,
-                             transform=-np.eye(dimensions) * Weights.wm)
+                             transform=-Weights.wm)
 
         # connect the STN to GPi and GPe (broad and excitatory)
         tr = Weights.wp * np.ones((dimensions, dimensions))
