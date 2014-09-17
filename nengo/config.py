@@ -183,8 +183,11 @@ class Config(object):
 
     context = collections.deque(maxlen=100)  # static stack of Config objects
 
-    def __init__(self):
+    def __init__(self, *configures):
         self.params = {}
+
+        for cls in configures:
+            self.configures(cls)
 
     @classmethod
     def default(cls, nengo_cls, param):

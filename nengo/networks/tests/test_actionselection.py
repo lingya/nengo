@@ -6,7 +6,7 @@ from nengo.utils.testing import Plotter
 
 
 def test_basic(Simulator):
-    bg = nengo.networks.BasalGanglia(dimensions=5, label="BG", seed=79)
+    bg = nengo.networks.BasalGanglia(dimensions=5, net=nengo.Network(seed=79))
     with bg:
         input = nengo.Node([0.8, 0.4, 0.4, 0.4, 0.4], label="input")
         nengo.Connection(input, bg.input, synapse=None)
@@ -31,7 +31,7 @@ def test_basic(Simulator):
 def test_thalamus(Simulator):
 
     with nengo.Network(seed=123) as net:
-        bg = nengo.networks.BasalGanglia(dimensions=5, label="BG")
+        bg = nengo.networks.BasalGanglia(dimensions=5)
         input = nengo.Node([0.8, 0.4, 0.4, 0.4, 0.4], label="input")
         nengo.Connection(input, bg.input, synapse=None)
 
