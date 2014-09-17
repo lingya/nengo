@@ -85,28 +85,32 @@ class CircularConvolution(nengo.Network):
     """
 
     def __init__(self, n_neurons, dimensions, invert_a=False, invert_b=False,
-                 radius=1, encoders=nengo.Default, **ens_kwargs):
+                 radius=1, encoders=nengo.Default,
+                 label=None, seed=None, add_to_container=None, **ens_kwargs):
+        super(CircularConvolution, self).__init__(
+            label, seed, add_to_container)
         self.dimensions = dimensions
         self.invert_a = invert_a
         self.invert_b = invert_b
 
-        self.A = nengo.Node(size_in=dimensions, label="A")
-        self.B = nengo.Node(size_in=dimensions, label="B")
-        self.product = Product(n_neurons,
-                               self.transform_out.shape[1],
-                               radius=radius,
-                               encoders=encoders,
-                               label="conv",
-                               **ens_kwargs)
-        self.output = nengo.Node(size_in=dimensions, label="output")
+        with self:
+            self.A = nengo.Node(size_in=dimensions, label="A")
+            self.B = nengo.Node(size_in=dimensions, label="B")
+            self.product = Product(n_neurons,
+                                   self.transform_out.shape[1],
+                                   radius=radius,
+                                   encoders=encoders,
+                                   label="conv",
+                                   **ens_kwargs)
+            self.output = nengo.Node(size_in=dimensions, label="output")
 
-        nengo.Connection(self.A, self.product.A,
-                         transform=self.transformA, synapse=None)
-        nengo.Connection(self.B, self.product.B,
-                         transform=self.transformB, synapse=None)
-        nengo.Connection(
-            self.product.output, self.output, transform=self.transform_out,
-            synapse=None)
+            nengo.Connection(self.A, self.product.A,
+                             transform=self.transformA, synapse=None)
+            nengo.Connection(self.B, self.product.B,
+                             transform=self.transformB, synapse=None)
+            nengo.Connection(
+                self.product.output, self.output, transform=self.transform_out,
+                synapse=None)
 
     @property
     def transformA(self):

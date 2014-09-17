@@ -16,8 +16,9 @@ class Cortical(Module):
     synapse : float
         The synaptic filter to use for the connections
     """
-    def __init__(self, actions, synapse=0.01):
-        super(Cortical, self).__init__()
+    def __init__(self, actions, synapse=0.01, label=None, seed=None,
+                 add_to_container=None):
+        super(Cortical, self).__init__(label, seed, add_to_container)
         self.actions = actions
         self.synapse = synapse
         self._bias = None
