@@ -193,6 +193,30 @@ def test_external_class():
         config[inst].thing
 
 
+def test_instance_fallthrough():
+    """If the class default is set, instances should use that."""
+    class A(object):
+        pass
+
+    inst1 = A()
+    inst2 = A()
+    config = nengo.Config(A)
+    config[A].set_param('amount', Parameter(default=1))
+    assert config[A].amount == 1
+    assert config[inst1].amount == 1
+    assert config[inst2].amount == 1
+    # Value can change for instance
+    config[inst1].amount = 2
+    assert config[A].amount == 1
+    assert config[inst1].amount == 2
+    assert config[inst2].amount == 1
+    # If value to A is changed, unset instances should also change
+    config[A].amount = 3
+    assert config[A].amount == 3
+    assert config[inst1].amount == 2
+    assert config[inst2].amount == 3
+
+
 if __name__ == '__main__':
     nengo.log(debug=True)
     pytest.main([__file__, '-v'])

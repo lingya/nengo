@@ -125,7 +125,9 @@ class InstanceParams(object):
             if key in self._clsparams.default_params:
                 raise
             param = self._clsparams.get_param(key)
-            return param.__get__(self, self.__class__)
+            if self in param:
+                return param.__get__(self, self.__class__)
+            return getattr(self._clsparams, key)
 
     def __setattr__(self, key, value):
         """Everything not starting with _ is assumed to be a parameter."""
