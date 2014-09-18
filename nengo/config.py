@@ -30,6 +30,9 @@ class ClassParams(object):
         self._configures = configures
         assert inspect.isclass(configures)
 
+    def __contains__(self, key):
+        return self in self.get_param(key)
+
     def __getattribute__(self, key):
         """Overridden to handle instance descriptors manually."""
         try:
@@ -112,6 +115,9 @@ class InstanceParams(object):
         self._clsparams = clsparams
         assert not inspect.isclass(configures)
 
+    def __contains__(self, key):
+        return self in self._clsparams.get_param(key)
+
     def __getattribute__(self, key):
         try:
             return super(InstanceParams, self).__getattribute__(key)
@@ -169,8 +175,7 @@ class Config(object):
     -------
     >>> class A(object): pass
     >>> inst = A()
-    >>> config = Config()
-    >>> config.configures(A)
+    >>> config = Config(A)
     >>> config[A].set_param('amount', Parameter(default=1))
     >>> print(config[inst].amount)
     1
@@ -185,12 +190,11 @@ class Config(object):
 
     def __init__(self, *configures):
         self.params = {}
-
         for cls in configures:
             self.configures(cls)
 
-    @classmethod
-    def default(cls, nengo_cls, param):
+    @staticmethod
+    def default(nengo_cls, param):
         """Look up the current default value for a parameter.
 
         The default is found by going through the config stack, top to bottom.
@@ -200,7 +204,7 @@ class Config(object):
 
         # Get the descriptor
         desc = getattr(nengo_cls, param)
-        for config in reversed(cls.context):
+        for config in reversed(Config.context):
 
             # If a default has been set for this config, return it
             if nengo_cls in config.params and config[nengo_cls] in desc:
@@ -238,7 +242,7 @@ class Config(object):
             # If no superclass ClassParams, KeyError
             raise KeyError(
                 "Type '%(name)s' is not set up for configuration. "
-                "Call 'configure(%(name)s)' first." % {'name': key.__name__})
+                "Call 'configures(%(name)s)' first." % {'name': key.__name__})
 
         # For new instances, if we configure a class in the mro we're good
         for cls in key.__class__.__mro__:
@@ -251,7 +255,7 @@ class Config(object):
         # If we don't configure the class, KeyError
         raise KeyError(
             "Type '%(name)s' is not set up for configuration. Call "
-            "configure('%(name)s') first." % {'name': key.__class__.__name__})
+            "configures('%(name)s') first." % {'name': key.__class__.__name__})
 
     def configures(self, cls):
         """Start configuring a particular class and its instances."""

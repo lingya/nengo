@@ -5,27 +5,8 @@ import numpy as np
 import nengo
 from nengo.solvers import NnlsL2nz
 from nengo.networks.ensemblearray import EnsembleArray
+from nengo.utils.compat import nested
 from nengo.utils.distributions import Choice, Uniform
-
-
-# Affects all ensembles / connections in the BG
-bg_config = nengo.Config(nengo.Ensemble, nengo.Connection)
-bg_config[nengo.Ensemble].radius = 1.5
-bg_config[nengo.Ensemble].encoders = Choice([[1]])
-try:
-    # Best, if we have SciPy
-    bg_config[nengo.Connection].solver = NnlsL2nz()
-except ImportError:
-    # Don't warn here; warn when the BG is made
-    pass
-
-# Affects connections to AMPA receptors
-ampa_config = nengo.Config(nengo.Connection)
-ampa_config[nengo.Connection].synapse = 0.002
-
-# Affects connections to GABA receptors
-gaba_config = nengo.Config(nengo.Connection)
-gaba_config[nengo.Connection].synapse = 0.008
 
 
 # connection weights from (Gurney, Prescott, & Redgrave, 2001)
@@ -72,25 +53,51 @@ class Weights(object):
         return cls.mg * (x - cls.eg)
 
 
-def BasalGanglia(dimensions, n_neurons_per_ensemble=100,
-                 output_weight=-3, input_bias=0.0, net=None):
+def BasalGanglia(dimensions, n_neurons_per_ensemble=100, output_weight=-3,
+                 input_bias=0.0, ampa_config=None, gaba_config=None, net=None):
     """Winner takes all; outputs 0 at max dimension, negative elsewhere."""
 
     if net is None:
         net = nengo.Network("Basal Ganglia")
 
-    # Warn if we can't use the better decoder solver.
-    try:
-        NnlsL2nz()
-    except ImportError:
-        warnings.warn("SciPy is not installed, so BasalGanglia will "
-                      "use default decoder solver. Installing SciPy "
-                      "may improve BasalGanglia performance.")
+    if ampa_config is None:
+        ampa_config = nengo.Config(nengo.Connection)
+        ampa_config[nengo.Connection].synapse = 0.002
+
+    # If the user passes in a config with 'synapse' set, we'll use it.
+    # Otherwise, we set it to be 0.002, and warn that we're doing it.
+    if 'synapse' not in ampa_config[nengo.Connection]:
+        warnings.warn(
+            "'ampa_config' does not have 'synapse' set. Setting to 0.002.")
+        ampa_config[nengo.Connection].synapse = 0.002
+
+    if gaba_config is None:
+        gaba_config = nengo.Config(nengo.Connection)
+        gaba_config[nengo.Connection].synapse = 0.008
+
+    if 'synapse' not in gaba_config[nengo.Connection]:
+        warnings.warn(
+            "'gaba_config' does not have 'synapse' set. Setting to 0.008.")
+        ampa_config[nengo.Connection].synapse = 0.008
 
     ea_params = {'n_neurons': n_neurons_per_ensemble,
                  'n_ensembles': dimensions}
 
-    with net, bg_config:
+    # Affects all ensembles / connections in the BG
+    # unless they've been overridden on `net.config`
+    config = nengo.Config(nengo.Ensemble, nengo.Connection)
+    config[nengo.Ensemble].radius = 1.5
+    config[nengo.Ensemble].encoders = Choice([[1]])
+    try:
+        # Best, if we have SciPy
+        config[nengo.Connection].solver = NnlsL2nz()
+    except ImportError:
+        # Warn if we can't use the better decoder solver.
+        warnings.warn("SciPy is not installed, so BasalGanglia will "
+                      "use default decoder solver. Installing SciPy "
+                      "may improve BasalGanglia performance.")
+
+    with nested(config, net):
         net.strD1 = EnsembleArray(label="Striatal D1 neurons",
                                   intercepts=Uniform(Weights.e, 1),
                                   **ea_params)
