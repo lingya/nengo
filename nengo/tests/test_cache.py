@@ -1,7 +1,5 @@
 import os
 import os.path
-import shutil
-import tempfile
 
 import numpy as np
 from numpy.testing import assert_equal
@@ -9,6 +7,7 @@ import pytest
 
 import nengo
 from nengo.cache import DecoderCache, Fingerprint
+from nengo.utils.compat import int_types
 from nengo.utils.testing import Timer
 
 
@@ -187,12 +186,9 @@ def dummy_fn_b(arg):
 @pytest.mark.parametrize('reference, equal, different', (
     (True, True, False),             # bool
     (False, False, True),            # bool
-    (1, 1, 2),                       # int
-    (1L, 1L, 2L),                    # long
     (1.0, 1.0, 2.0),                 # float
     (1.0 + 2.0j, 1 + 2j, 2.0 + 1j),  # complex
     (b'a', b'a', b'b'),              # bytes
-    ('a', 'a', 'b'),              # string
     (u'a', u'a', u'b'),              # unicode string
     (np.eye(2), np.eye(2), np.array([[0, 1], [1, 0]])),      # array
     ({'a': 1, 'b': 2}, {'b': 2, 'a': 1}, {'a': 2, 'b': 1}),  # dict
@@ -202,14 +198,14 @@ def dummy_fn_b(arg):
     (DummyA(1), DummyA(1), DummyA(2)),     # object instance
     (DummyA(1), DummyA(1), DummyA(2)),     # object instance
     (dummy_fn_a, dummy_fn_a, dummy_fn_b),  # function
-))
+) + tuple((typ(1), typ(1), typ(2)) for typ in int_types))
 def test_fingerprinting(reference, equal, different):
     assert str(Fingerprint(reference)) == str(Fingerprint(equal))
     assert str(Fingerprint(reference)) != str(Fingerprint(different))
 
 
 def test_fails_for_lambda_expression():
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         Fingerprint(lambda x: x)
 
 
@@ -224,8 +220,8 @@ def test_cache_performance(tmpdir, Simulator):
     model = nengo.Network(seed=1)
     with model:
         nengo.Connection(nengo.Ensemble(1500, 10), nengo.Ensemble(1500, 10))
-    built_model = nengo.builder.Model(
-        dt=0.001, seed=model.seed, decoder_cache=DecoderCache(cache_dir))
+    built_model = nengo.builder.Model(dt=0.001,
+                                      decoder_cache=DecoderCache(cache_dir))
     with Timer() as t_no_cache:
         nengo.Simulator(model, caching=False)
     with Timer() as t_cache_miss:

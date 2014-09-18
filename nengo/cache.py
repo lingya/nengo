@@ -5,17 +5,13 @@ import inspect
 import logging
 import os
 import os.path
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
 import struct
-import warnings
 
 import numpy as np
 
 import nengo.utils.appdirs
 import nengo.version
+from nengo.utils.compat import pickle, PY2
 
 logger = logging.getLogger(__name__)
 
@@ -39,8 +35,11 @@ class Fingerprint(object):
     def __init__(self, obj):
         self.fingerprint = hashlib.sha1()
         try:
-            self.fingerprint.update(pickle.dumps(obj).encode())
-        except pickle.PicklingError as err:
+            if PY2:
+                self.fingerprint.update(pickle.dumps(obj).encode())
+            else:
+                self.fingerprint.update(pickle.dumps(obj))
+        except (pickle.PicklingError, TypeError) as err:
             raise ValueError("Cannot create fingerprint: {msg}".format(
                 msg=str(err)))
 
@@ -192,7 +191,10 @@ class DecoderCache(object):
     def _get_cache_key(self, solver, activities, targets, rng, E):
         h = hashlib.sha1()
 
-        h.update(str(Fingerprint(solver)))
+        if PY2:
+            h.update(str(Fingerprint(solver)))
+        else:
+            h.update(str(Fingerprint(solver)).encode('utf-8'))
 
         h.update(activities.data)
         h.update(targets.data)

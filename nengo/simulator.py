@@ -14,8 +14,8 @@ import numpy as np
 
 import nengo.utils.numpy as npext
 from nengo.builder import Model, Builder, SignalDict
+from nengo.cache import DecoderCache, NoDecoderCache
 from nengo.utils.compat import range
-import nengo.cache
 from nengo.utils.graphs import toposort
 from nengo.utils.simulator import operator_depencency_graph
 
@@ -102,27 +102,24 @@ class Simulator(object):
             created from a unit test.
         """
         if model is None:
-            self.model = Model(
-                dt=dt, label="%s, dt=%f" % (network, dt))
             in_test = hasattr(sys, '_called_from_test')
             network_seed_set = network is not None and network.seed is not None
             if caching:
-                decoder_cache = nengo.cache.DecoderCache(caching == 'ro')
+                decoder_cache = DecoderCache(caching == 'ro')
             elif caching is None and network_seed_set and not in_test:
-                decoder_cache = nengo.cache.DecoderCache()
+                decoder_cache = DecoderCache()
             else:
-                decoder_cache = nengo.cache.NoDecoderCache()
+                decoder_cache = NoDecoderCache()
 
-            self.model = Model(dt=self.dt,
-                               label="%s, dt=%f" % (network.label, dt),
-                               seed=network.seed, decoder_cache=decoder_cache)
+            self.model = Model(dt=dt,
+                               label="%s, dt=%f" % (network, dt),
+                               decoder_cache=decoder_cache)
         else:
             self.model = model
 
         if network is not None:
             # Build the network into the model
-            Builder.build(
-                network, model=self.model)
+            Builder.build(network, model=self.model)
 
         self.model.decoder_cache.shrink()
 
