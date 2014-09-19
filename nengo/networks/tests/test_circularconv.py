@@ -43,7 +43,7 @@ def test_neural_accuracy(Simulator, dims=16, neurons_per_product=256):
         inputA = nengo.Node(a)
         inputB = nengo.Node(b)
         cconv = nengo.networks.CircularConvolution(
-            neurons_per_product, dimensions=dims, input_norm=2)
+            neurons_per_product, dimensions=dims)
         nengo.Connection(inputA, cconv.A, synapse=None)
         nengo.Connection(inputB, cconv.B, synapse=None)
         res_p = nengo.Probe(cconv.output)
