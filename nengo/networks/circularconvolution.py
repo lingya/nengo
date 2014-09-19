@@ -132,8 +132,8 @@ class CircularConvolution(nengo.Network):
 
         tr = tr.reshape(4*dims2, dims)
         self._remove_imag_rows(tr)
-        # scaling is needed since we have 1./sqrt(dims) in DFT
-        tr *= np.sqrt(dims)
+        # IDFT has a 1/D scaling factor
+        tr /= dims
 
         return tr.T
 
@@ -142,8 +142,7 @@ class CircularConvolution(nengo.Network):
     def dft_half(n):
         x = np.arange(n)
         w = np.arange(n // 2 + 1)
-        return ((1. / np.sqrt(n)) *
-                np.exp((-2.j * np.pi / n) * (w[:, None] * x[None, :])))
+        return np.exp((-2.j * np.pi / n) * (w[:, None] * x[None, :]))
 
     @staticmethod
     @memoize
