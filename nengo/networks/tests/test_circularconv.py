@@ -31,7 +31,8 @@ def test_circularconv_transforms(invert_a, invert_b):
 
     assert np.allclose(z0, z1)
 
-def test_neural_accuracy(Simulator, dims=16, neurons_per_product=256):
+@pytest.mark.parametrize('dims', [4, 32])
+def test_neural_accuracy(Simulator, dims, neurons_per_product=128):
     rng = np.random.RandomState(4238)
     a = rng.normal(scale=np.sqrt(1./dims), size=dims)
     b = rng.normal(scale=np.sqrt(1./dims), size=dims)
@@ -47,25 +48,12 @@ def test_neural_accuracy(Simulator, dims=16, neurons_per_product=256):
         nengo.Connection(inputA, cconv.A, synapse=None)
         nengo.Connection(inputB, cconv.B, synapse=None)
         res_p = nengo.Probe(cconv.output)
-        p_p = nengo.Probe(cconv.product.A)
     sim = Simulator(model)
     sim.run(0.01)
 
     rmse = np.sqrt(np.mean((result - sim.data[res_p][-1])**2))
     assert rmse < 0.1
 
-    '''
-    print 'a', np.sqrt(np.sum(a**2))
-    print 'b', np.sqrt(np.sum(b**2))
-
-    print cconv.product.all_ensembles[0].radius
-    print sim.data[p_p][-1]
-
-    print 'desired result', result
-    print 'result', sim.data[res_p][-1]
-    print 'rmse', rmse
-    assert False
-    '''
 
 if __name__ == "__main__":
     nengo.log(debug=True)
