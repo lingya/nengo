@@ -4,11 +4,8 @@ import numpy as np
 import pytest
 
 import nengo
-from nengo.networks import EnsembleArray
 from nengo.networks.circularconvolution import circconv
-from nengo.utils.compat import range
 from nengo.utils.numpy import rmse
-from nengo.utils.testing import Plotter
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +28,7 @@ def test_circularconv_transforms(invert_a, invert_b):
 
     assert np.allclose(z0, z1)
 
+
 @pytest.mark.parametrize('dims', [4, 32])
 def test_neural_accuracy(Simulator, dims, neurons_per_product=128):
     rng = np.random.RandomState(4238)
@@ -51,8 +49,9 @@ def test_neural_accuracy(Simulator, dims, neurons_per_product=128):
     sim = Simulator(model)
     sim.run(0.01)
 
-    rmse = np.sqrt(np.mean((result - sim.data[res_p][-1])**2))
-    assert rmse < 0.1
+    error = rmse(result, sim.data[res_p][-1])
+
+    assert error < 0.1
 
 
 if __name__ == "__main__":
