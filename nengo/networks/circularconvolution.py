@@ -45,8 +45,8 @@ class CircularConvolution(nengo.Network):
         the first input (`invert_a`) or the second input (`invert_b`).
         Flipping the second input will make the network perform circular
         correlation instead of circular convolution.
-    input_norm : float
-        The expected norm (vector magnitude) of the two input values.
+    input_magnitude : float
+        The expected magnitude (vector norm) of the two input values.
 
     Examples
     --------
@@ -87,7 +87,7 @@ class CircularConvolution(nengo.Network):
     """
 
     def __init__(self, n_neurons, dimensions, invert_a=False, invert_b=False,
-                 input_norm=1):
+                 input_magnitude=1):
         self.dimensions = dimensions
         self.invert_a = invert_a
         self.invert_b = invert_b
@@ -96,7 +96,7 @@ class CircularConvolution(nengo.Network):
         self.B = nengo.Node(size_in=dimensions, label="B")
         self.product = Product(n_neurons,
                                self.transform_out.shape[1],
-                               radius=input_norm * 2,
+                               radius=input_magnitude * 2,
                                label="conv")
         self.output = nengo.Node(size_in=dimensions, label="output")
 
