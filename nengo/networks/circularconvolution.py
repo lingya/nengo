@@ -45,6 +45,8 @@ class CircularConvolution(nengo.Network):
         the first input (`invert_a`) or the second input (`invert_b`).
         Flipping the second input will make the network perform circular
         correlation instead of circular convolution.
+    input_norm : float
+        The expected norm (vector magnitude) of the two input values.
 
     Examples
     --------
