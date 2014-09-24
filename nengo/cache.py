@@ -123,10 +123,10 @@ class DecoderCache(object):
                 self.cache_dir, key + self._SOLVER_INFO_EXT)
 
             excess -= os.stat(decoder_path).st_size
-            os.unlink(decoder_path)
+            os.remove(decoder_path)
             if os.path.exists(solver_info_path):
                 excess -= os.stat(solver_info_path).st_size
-                os.unlink(solver_info_path)
+                os.remove(solver_info_path)
 
     def invalidate(self):
         """Invalidates the cache (i.e. removes all stored decoder matrices)."""
@@ -134,7 +134,7 @@ class DecoderCache(object):
             is_cache_file = filename.endswith(self._DECODER_EXT) or \
                 filename.endswith(self._SOLVER_INFO_EXT)
             if is_cache_file:
-                os.unlink(os.path.join(self.cache_dir, filename))
+                os.remove(os.path.join(self.cache_dir, filename))
 
     @classmethod
     def get_default_dir(cls):
