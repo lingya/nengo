@@ -29,11 +29,14 @@ try:
     import configparser
 except ImportError:
     import ConfigParser as configparser
+import logging
 import os
 
 import nengo.utils.appdirs
 import nengo.version
 
+
+logger = logging.getLogger(__name__)
 
 _APPDIRS = nengo.utils.appdirs.AppDirs(
     nengo.version.name, nengo.version.author)
@@ -77,6 +80,19 @@ class _Runcom(configparser.SafeConfigParser):
             self.add_section(section)
             for k, v in settings.items():
                     self.set(section, k, str(v))
+
+    def readfp(self, fp, filename=None):
+        if filename is None:
+            if hasattr(fp, 'name'):
+                filename = fp.name
+            else:
+                filename = '<???>'
+        logger.info('Reading runcom from {}'.format(filename))
+        return configparser.SafeConfigParser.readfp(self, fp, filename)
+
+    def read(self, filenames):
+        logger.info('Reading runcom files {}'.format(filenames))
+        return configparser.SafeConfigParser.read(self, filenames)
 
     def reload_rc(self, filenames=None):
         """Resets the currently loaded RC settings and loads new RC files.
