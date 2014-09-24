@@ -13,7 +13,7 @@ import numpy as np
 
 import nengo.utils.numpy as npext
 from nengo.builder import Model, Builder, SignalDict
-from nengo.cache import DecoderCache, NoDecoderCache
+from nengo.cache import get_default_decoder_cache
 from nengo.runcom import runcom
 from nengo.utils.compat import range
 from nengo.utils.graphs import toposort
@@ -97,16 +97,8 @@ class Simulator(object):
             then you can pass in a ``nengo.builder.Model`` instance.
         """
         if model is None:
-            caching = runcom.getboolean('decoder_cache', 'enabled')
             network_seed_set = network is not None and network.seed is not None
-            if caching:
-                decoder_cache = DecoderCache(
-                    runcom.getboolean('decoder_cache', 'readonly'))
-            elif caching is None and network_seed_set:
-                decoder_cache = DecoderCache()
-            else:
-                decoder_cache = NoDecoderCache()
-
+            decoder_cache = get_default_decoder_cache(network_seed_set)
             self.model = Model(dt=dt,
                                label="%s, dt=%f" % (network, dt),
                                decoder_cache=decoder_cache)
