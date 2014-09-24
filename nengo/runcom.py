@@ -79,7 +79,7 @@ class _Runcom(configparser.SafeConfigParser):
         for section, settings in DEFAULTS.items():
             self.add_section(section)
             for k, v in settings.items():
-                    self.set(section, k, str(v))
+                self.set(section, k, str(v))
 
     def readfp(self, fp, filename=None):
         if filename is None:
