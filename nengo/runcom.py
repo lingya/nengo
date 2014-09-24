@@ -38,8 +38,7 @@ import nengo.version
 
 logger = logging.getLogger(__name__)
 
-_APPDIRS = nengo.utils.appdirs.AppDirs(
-    nengo.version.name, nengo.version.author)
+_APPDIRS = nengo.utils.appdirs.AppDirs(nengo.version.name)
 
 DEFAULTS = {
     'decoder_cache': {
