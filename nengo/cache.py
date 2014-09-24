@@ -240,9 +240,9 @@ class NoDecoderCache(object):
 
 
 def get_default_decoder_cache(network_seed_set):
-    if runcom.getboolean('decoder_cache', 'enabled'):
+    if nengo.runcom.runcom.getboolean('decoder_cache', 'enabled'):
         decoder_cache = DecoderCache(
-            runcom.getboolean('decoder_cache', 'readonly'))
+            nengo.runcom.runcom.getboolean('decoder_cache', 'readonly'))
     else:
         decoder_cache = NoDecoderCache()
     return decoder_cache
