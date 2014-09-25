@@ -15,7 +15,7 @@ http://nbviewer.ipython.org/urls/gist.github.com/ChrisBeaumont/5758381/raw/descr
 import collections
 import inspect
 
-from nengo.params import is_param
+from nengo.params import Default, is_param
 
 
 class ClassParams(object):
@@ -48,7 +48,10 @@ class ClassParams(object):
         if key.startswith("_"):
             super(ClassParams, self).__setattr__(key, value)
         else:
-            self.get_param(key).defaults[self] = value
+            if value is Default:
+                delattr(self, key)  # setting to Default equivalent to deleting
+            else:
+                self.get_param(key).defaults[self] = value
 
     def __delattr__(self, key):
         if key.startswith("_"):
