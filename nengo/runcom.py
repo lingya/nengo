@@ -10,6 +10,9 @@ Nengo RC settings will be read from the following files in the given order:
 3. File given in the environment variable ``$NENGORC``.
 4. nengorc in the current directory.
 
+Files further down in the list can overwrite the values defined in files loaded
+earlier.
+
 
 The RC file is divided into sections by lines containing the section name
 in brackets, i.e. ``[section]``. A setting is set by giving the name followed
