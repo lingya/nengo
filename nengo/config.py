@@ -60,18 +60,15 @@ class ClassParams(object):
             del self.get_param(key).defaults[self]
 
     def __str__(self):
-        lines = ["All parameters for %s:" % self._configures.__name__]
-
         # Only print defaults if we've configured them
-        for attr in self.default_params:
-            if self in self.get_param(attr):
-                lines.append("  %s: %s" % (attr, getattr(self, attr)))
+        params = []
+        filled_defaults = [attr for attr in self.default_params
+                           if self in self.get_param(attr)]
+        for attr in filled_defaults + sorted(self.extra_params):
+            params.append("%s: %s" % (attr, getattr(self, attr)))
 
-        # Print all extra params
-        for attr in self.extra_params:
-            lines.append("  %s: %s" % (attr, getattr(self, attr)))
-
-        return "\n".join(lines)
+        return "%s[%s]{%s}" % (self.__class__.__name__,
+            self._configures.__name__, ", ".join(params))
 
     def get_param(self, key):
         if key in self.extra_params:
@@ -157,11 +154,14 @@ class InstanceParams(object):
             self._clsparams.get_param(key).__del__(self)
 
     def __str__(self):
-        lines = ["Parameters set for %s:" % str(self._configures)]
-        for attr in self._clsparams.params:
-            if self in self._clsparams.get_param(attr):
-                lines.append("  %s: %s" % (attr, getattr(self, attr)))
-        return "\n".join(lines)
+        params = []
+        filled_params = [attr for attr in self._clsparams.params
+                         if self in self._clsparams.get_param(attr)]
+        for attr in filled_params:
+            params.append("%s: %s" % (attr, getattr(self, attr)))
+
+        return "%s[%s]{%s}" % (self.__class__.__name__,
+            self._configures.__name__, ", ".join(params))
 
     def get_param(self, key):
         raise ValueError("Cannot get parameters on an instance; use "
