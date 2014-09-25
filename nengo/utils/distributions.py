@@ -229,7 +229,10 @@ class SqrtBeta(Distribution):
             Probability that `X <= x`.
         """
         from scipy.special import betainc
-        return betainc(self.m / 2.0, self.n / 2.0, x * x)
+        sq_x = x * x
+        return np.where(
+            sq_x < 1., betainc(self.m / 2.0, self.n / 2.0, sq_x),
+            np.ones_like(x))
 
 
 class SubvectorLength(SqrtBeta):
