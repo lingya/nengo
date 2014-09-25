@@ -5,93 +5,112 @@ from __future__ import absolute_import
 import numpy as np
 from scipy.special import beta, betainc
 
-from nengo.utils.distributions import SqrtBeta
+import nengo
+from nengo.utils.distributions import SubvectorLength
 
 
-def sp_subvector_optimal_radius(
-        sp_dimensions, sp_subdimensions, ens_dimensions, eval_points):
-    """Determines the optimal radius for ensembles when splitting up a semantic
-    pointer (unit vector) into subvectors.
-
-    Requires Scipy.
+class SubvectorRadiusOptimizer(object):
+    """Class to find the optimal radius for an ensemble representing a
+    subvector of a semantic pointer.
 
     Parameters
     ----------
+    n_neurons : int
+        Number of neurons in the ensemble optimizing for.
     dimensions : int
-        Dimensionality of the complete semantic pointer/unit vector.
-    subdimensions : int
-        Dimensionality of the subvectors represented by the ensembles.
-    ens_dimensions : int
-        Dimensionality of the ensemble. Usually this is the same as
-        `subdimensions`. An exception are multiplications where `subdimensions`
-        is typically 1, but each ensemble represents 2 independent dimensions
-        of two different vectors. In that case `ens_dimensions` should be set
-        to 2.
-    eval_points : int
-        Number of evaluation points used for the representing ensembles.
-
-    Returns
-    -------
-    float
-        Optimal radius for the representing ensembles.
+        Number of dimensions represented in the ensemble optimizing for. This
+        might be larger than the dimensionality of the subvector if different
+        semantic pointers are combined in the ensemble.
+    seed : int, optional
+        Seed to be used to estimate the distortion of the ensemble.
+    ens_kwargs : dict
+        Further parameter settings of the ensemble optimizing for. (Can also be
+        set with the config system.)
     """
-    import scipy.optimize
-    res = scipy.optimize.minimize(
-        lambda x: sp_subvector_error(
-            sp_dimensions, sp_subdimensions, ens_dimensions, eval_points, x),
-        0.0001)
-    return np.asscalar(res.x)
 
+    def __init__(self, n_neurons, dimensions, seed=None, **ens_kwargs):
+        m = nengo.Network(seed=seed, add_to_container=False)
+        with m:
+            conn = nengo.Connection(
+                nengo.Ensemble(
+                    n_neurons, dimensions, radius=1.0, **ens_kwargs),
+                nengo.Ensemble(
+                    n_neurons=1, dimensions=dimensions,
+                    neuron_type=nengo.Direct()))
+        sim = nengo.Simulator(m)
+        self.distortion = sim.model.params[conn].distortion
 
-def sp_subvector_error(
-        sp_dimensions, sp_subdimensions, ens_dimensions, eval_points, radius):
-    """Estimate of representational error of a subvector of a semantic pointer
-    (unit vector).
+    def find_optimal_radius(self, sp_dimensions, sp_subdimensions=1):
+        """Determines the optimal radius for ensembles when splitting up a
+        semantic pointer (unit vector) into subvectors.
 
-    Requires Scipy.
+        Requires Scipy.
 
-    Paramaters
-    ----------
-    dimensions : int
-        Dimensionality of the complete semantic pointer/unit vector.
-    subdimensions : int
-        Dimensionality of the subvector represented by some ensemble.
-    eval_points : int
-        Number of evaluations points used for the representing ensemble.
-    radius : float or ndarray
-        Radius of the representing ensemble.
+        Parameters
+        ----------
+        sp_dimensions : int
+            Dimensionality of the complete semantic pointer/unit vector.
+        sp_subdimensions : int, optional
+            Dimensionality of the subvectors represented by the ensembles.
 
-    Returns
-    -------
-    Error estimates for representing a subvector with `subdimensions`
-    dimensions of a `dimensions` dimensional unit vector with an ensemble
-    initialized with `eval_points` evaluation points and a radius of `radius`.
-    """
-    dist = SqrtBeta(sp_dimensions - sp_subdimensions, sp_subdimensions)
-    return (dist.cdf(radius) * _sp_subvector_error_in_range(
-        ens_dimensions, eval_points, radius) +
-        (1.0 - dist.cdf(radius)) * _sp_subvector_error_out_of_range(
-            sp_dimensions, sp_subdimensions, eval_points, radius))
+        Returns
+        -------
+        float
+            Optimal radius for the representing ensembles.
+        """
+        import scipy.optimize
+        res = scipy.optimize.minimize(
+            lambda x: self.sp_subvector_error(
+                x, sp_dimensions, sp_subdimensions), 0.1, bounds=[(0., 1.)])
+        return np.asscalar(res.x)
 
+    def sp_subvector_error(self, radius, sp_dimensions, sp_subdimensions=1):
+        """Estimate of representational error of a subvector of a semantic
+        pointer (unit vector).
 
-def _sp_subvector_error_in_range(ens_dimensions, eval_points, radius):
-    return (radius / max(
-        1.0, (eval_points) ** (1.0 / ens_dimensions) - 1)) ** 2 / 3.0
+        Requires Scipy.
 
+        Paramaters
+        ----------
+        radius : float or ndarray
+            Radius of the representing ensemble.
+        sp_dimensions : int
+            Dimensionality of the complete semantic pointer/unit vector.
+        sp_subdimensions : int, optional
+            Dimensionality of the subvector represented by some ensemble.
 
-def _sp_subvector_error_out_of_range(
-        dimensions, subdimensions, eval_points, radius):
-    dist = SqrtBeta(dimensions - subdimensions, subdimensions)
-    sq_r = radius * radius
+        Returns
+        -------
+        Error estimates for representing a subvector with `subdimensions`
+        dimensions of a `dimensions` dimensional unit vector with an ensemble
+        initialized with of `radius`.
+        """
+        dist = SubvectorLength(sp_dimensions, sp_subdimensions)
+        in_range = self._sp_subvector_error_in_range(radius)
+        out_of_range = self._sp_subvector_error_out_of_range(
+            radius, sp_dimensions, sp_subdimensions)
+        return dist.cdf(radius) * in_range + (
+            1.0 - dist.cdf(radius)) * out_of_range
 
-    normalization = 1.0 - dist.cdf(radius)
-    b = (dimensions - subdimensions) / 2.0
-    aligned_integral = beta(subdimensions / 2.0 + 1.0, b) * (1.0 - betainc(
-        subdimensions / 2.0 + 1.0, b, sq_r))
-    cross_integral = beta((subdimensions + 1) / 2.0, b) * (1.0 - betainc(
-        (subdimensions + 1) / 2.0, b, sq_r))
+    def _sp_subvector_error_in_range(self, radius):
+        return radius * radius * self.distortion
 
-    numerator = (sq_r * normalization + (
-        aligned_integral - 2.0 * radius * cross_integral) / beta(
-        subdimensions / 2.0, b))
-    return numerator / normalization
+    def _sp_subvector_error_out_of_range(
+            self, radius, dimensions, subdimensions):
+        dist = SubvectorLength(dimensions, subdimensions)
+        sq_r = radius * radius
+
+        normalization = 1.0 - dist.cdf(radius)
+        b = (dimensions - subdimensions) / 2.0
+        aligned_integral = beta(subdimensions / 2.0 + 1.0, b) * (1.0 - betainc(
+            subdimensions / 2.0 + 1.0, b, sq_r))
+        cross_integral = beta((subdimensions + 1) / 2.0, b) * (1.0 - betainc(
+            (subdimensions + 1) / 2.0, b, sq_r))
+
+        numerator = (sq_r * normalization + (
+            aligned_integral - 2.0 * radius * cross_integral) / beta(
+            subdimensions / 2.0, b))
+        with np.errstate(invalid='ignore'):
+            return np.where(
+                numerator > np.MachAr().eps,
+                numerator / normalization, np.zeros_like(normalization))
