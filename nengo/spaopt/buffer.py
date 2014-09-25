@@ -1,6 +1,5 @@
 import nengo
 from nengo.spa.module import Module
-from nengo.utils.optimization import sp_subvector_optimal_radius
 
 
 class Buffer(Module):

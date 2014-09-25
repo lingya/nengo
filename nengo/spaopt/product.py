@@ -3,7 +3,7 @@ import numpy as np
 import nengo
 from nengo.networks.ensemblearray import EnsembleArray
 from nengo.utils.compat import is_number
-from nengo.utils.optimization import sp_subvector_optimal_radius
+from nengo.utils.optimization import SubvectorRadiusOptimizer
 
 
 # TODO unittest pure product
@@ -34,8 +34,8 @@ class Product(nengo.Network):
                 [[1, 1], [1, -1], [-1, 1], [-1, -1]],
                 ((n_neurons // 4) + 1, 1))[:n_neurons]
 
-        scaled_r = radius * sp_subvector_optimal_radius(
-            dimensions, 1, 2, n_eval_points)
+        optimizer = SubvectorRadiusOptimizer(n_neurons, 2, **ens_kwargs)
+        scaled_r = radius * optimizer.find_optimal_radius(dimensions, 1)
 
         if is_number(eval_points):
             xs = np.linspace(-scaled_r, scaled_r, int(np.sqrt(n_eval_points)))
