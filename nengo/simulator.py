@@ -15,7 +15,7 @@ import numpy as np
 
 import nengo.utils.numpy as npext
 from nengo.builder import Model, Builder, SignalDict
-from nengo.utils.compat import range
+from nengo.utils.compat import get_terminal_size, range
 from nengo.utils.graphs import toposort
 from nengo.utils.simulator import operator_depencency_graph
 
@@ -36,11 +36,17 @@ class ProgressBar(object):
     def start(self):
         self.steps = 0
         self.last_update = 0
-        sys.stdout.write(os.linesep)
+        self._on_start()
         self.update()
 
+    def _on_start(self):
+        raise NotImplementedError()
+
     def finish(self):
-        sys.stdout.write(os.linesep)
+        self._on_finish()
+
+    def _on_finish(self):
+        raise NotImplementedError()
 
     def step(self, n=1):
         self.steps = min(self.steps + n, self.max_steps)
@@ -49,10 +55,22 @@ class ProgressBar(object):
 
     def update(self):
         self.last_update = self.steps
-        width = 80
+        self._on_update()
+
+
+class CmdProgress(ProgressBar):
+    def _on_start(self):
+        pass
+
+    def _on_finish(self):
+        sys.stdout.write('\r' + os.linesep)
+        sys.stdout.flush()
+
+    def _on_update(self):
+        width, _ = get_terminal_size()
         ticks = int(width * self.progress)
         sys.stdout.write('\r' + '#' * ticks)
-
+        sys.stdout.flush()
 
 
 class ProbeDict(Mapping):
