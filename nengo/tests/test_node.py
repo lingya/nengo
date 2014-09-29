@@ -127,7 +127,7 @@ def test_passthrough_filter(Simulator):
         plt.savefig("test_node.test_passthrough_filter.pdf")
         plt.close()
 
-    assert np.allclose(y[:-1], z[1:])
+    assert np.allclose(y[:-1], z[1:], atol=1e-7, rtol=1e-4)
 
 
 def test_circular(Simulator):

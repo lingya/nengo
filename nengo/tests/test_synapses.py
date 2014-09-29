@@ -39,7 +39,7 @@ def test_lowpass(Simulator):
     t, x, yhat = run_synapse(Simulator, nengo.synapses.Lowpass(tau), dt=dt)
     y = filt(x, tau / dt)
 
-    assert allclose(t, y.flatten(), yhat.flatten(), delay=1,
+    assert allclose(t, y, yhat, delay=dt,
                     plotter=Plotter(Simulator),
                     filename='test_synapse.test_lowpass.pdf')
 
@@ -58,7 +58,7 @@ def test_alpha(Simulator):
     t, x, yhat = run_synapse(Simulator, nengo.synapses.Alpha(tau), dt=dt)
     y = lti(x, (b, a))
 
-    assert allclose(t, y.flatten(), yhat.flatten(), delay=1, atol=5e-6,
+    assert allclose(t, y, yhat, delay=dt, atol=5e-6,
                     plotter=Plotter(Simulator),
                     filename='test_synapse.test_alpha.pdf')
 
@@ -71,7 +71,7 @@ def test_decoders(Simulator, nl):
         Simulator, nengo.synapses.Lowpass(tau), dt=dt, n_neurons=100)
 
     y = filt(x, tau / dt)
-    assert allclose(t, y.flatten(), yhat.flatten(), delay=1,
+    assert allclose(t, y, yhat, delay=dt,
                     plotter=Plotter(Simulator, nl),
                     filename='test_synapse.test_decoders.pdf')
 
@@ -92,7 +92,7 @@ def test_general(Simulator):
         Simulator, nengo.synapses.LinearFilter(num, den), dt=dt)
     y = lti(x, (numi, deni))
 
-    assert allclose(t, y.flatten(), yhat.flatten(),
+    assert allclose(t, y, yhat,
                     plotter=Plotter(Simulator),
                     filename='test_synapse.test_general.pdf')
 

@@ -280,14 +280,15 @@ def test_compare_solvers(Simulator, nl_nodirect):
 
     # ref = sim.data[up]
     ref = filtfilt(sim.data[ap], 20)
-    outputs = np.array([sim.data[probe][:, 0] for probe in probes])
-    outputs_f = filtfilt(outputs, 20, axis=1)
+    outputs = np.array([sim.data[probe][:, 0] for probe in probes]).T
+    outputs_f = filtfilt(outputs, 0.02 / dt, axis=0)
 
     close = allclose(t, ref, outputs_f,
+                     atol=0.05, rtol=0, buf=0.1, delay=0.007,
                      plotter=Plotter(Simulator, nl_nodirect),
-                     filename='test_solvers.test_solvers.pdf',
-                     labels=names,
-                     atol=0.05, rtol=0, buf=100, delay=7)
+                     filename='test_solvers.test_compare_solvers.pdf',
+                     labels=names, individual_results=True)
+
     for name, c in zip(names, close):
         assert c, "Solver '%s' does not meet tolerances" % name
 
