@@ -212,61 +212,66 @@ def test_signaldict_reset():
 @pytest.mark.benchmark
 @pytest.mark.parametrize('func, n_neurons', itertools.product(
     (lambda x: x, lambda x: x * x), (50, 200, 1000)))
-def test_error_estimate(func, n_neurons):
+def test_distortion(func, n_neurons):
     np.random.seed(23897)
 
-    synapse = 0.005
     duration = 2.0
 
-    def relative_error_of_error_estimate():
+    def relative_error_of_distortion():
         m = nengo.Network(seed=np.random.randint(nengo.utils.numpy.maxint))
         with m:
             in_node = nengo.Node(output=lambda t: t - 1.0)
-            ensemble = nengo.Ensemble(n_neurons, 1)
+            ensemble = nengo.Ensemble(
+                n_neurons, 1, neuron_type=nengo.LIFRate())
             direct = nengo.Ensemble(1, 1, neuron_type=nengo.Direct())
             nengo.Connection(in_node, ensemble)
             nengo.Connection(in_node, direct)
             conn = nengo.Connection(ensemble, nengo.Ensemble(
                 1, 1, neuron_type=nengo.Direct()), function=func)
-            probe = nengo.Probe(ensemble, synapse=synapse)
-            dprobe = nengo.Probe(direct, synapse=synapse)
+            dconn = nengo.Connection(direct, nengo.Ensemble(
+                1, 1, neuron_type=nengo.Direct()), function=func)
+            probe = nengo.Probe(conn, synapse=None)
+            dprobe = nengo.Probe(dconn, synapse=None)
         sim = nengo.Simulator(m)
         sim.run(duration)
         mse = np.mean(np.square(sim.data[probe] - sim.data[dprobe]))
-        return np.abs(1. - sim.model.params[conn].error_estimate / mse)
+        return np.abs(1. - sim.model.params[conn].distortion / mse)
 
-    errors = np.array([relative_error_of_error_estimate() for i in range(5)])
-    assert np.mean(errors) < 0.75
+    errors = np.array([relative_error_of_distortion() for i in range(5)])
+    assert np.mean(errors) < 0.4
 
 
 @pytest.mark.benchmark
-def test_error_estimate_2d():
+def test_distortion_3d():
     np.random.seed(37)
 
     n_neurons = 100
-    synapse = 0.005
     duration = 2. * np.pi
 
-    # TODO test multidimensional error
-    def relative_error_of_error_estimate():
+    def relative_error_of_distortion():
+        def inputfn(t):
+            v = np.array([np.sin(t), np.cos(t), t / np.pi - 1.])
+            return v / np.linalg.norm(v)
+
         m = nengo.Network(seed=np.random.randint(nengo.utils.numpy.maxint))
         with m:
-            in_node = nengo.Node(output=lambda t: (np.sin(t), np.cos(t)))
-            ensemble = nengo.Ensemble(n_neurons, 2)
-            direct = nengo.Ensemble(1, 2, neuron_type=nengo.Direct())
+            in_node = nengo.Node(output=inputfn)
+            ensemble = nengo.Ensemble(
+                n_neurons, 3, neuron_type=nengo.LIFRate())
+            direct = nengo.Ensemble(1, 3, neuron_type=nengo.Direct())
             nengo.Connection(in_node, ensemble)
             nengo.Connection(in_node, direct)
             conn = nengo.Connection(ensemble, nengo.Ensemble(
-                1, 2, neuron_type=nengo.Direct()))
-            probe = nengo.Probe(ensemble, synapse=synapse)
-            dprobe = nengo.Probe(direct, synapse=synapse)
+                1, 3, neuron_type=nengo.Direct()))
+            probe = nengo.Probe(ensemble, synapse=None)
+            dprobe = nengo.Probe(direct, synapse=None)
         sim = nengo.Simulator(m)
         sim.run(duration)
         mse = np.mean(np.square(sim.data[probe] - sim.data[dprobe]))
-        return np.abs(1. - sim.model.params[conn].error_estimate / mse)
+        return np.abs(1. - sim.model.params[conn].distortion / mse)
 
-    errors = np.array([relative_error_of_error_estimate() for i in range(5)])
-    assert np.mean(errors) < 0.75
+    errors = np.array([relative_error_of_distortion() for i in range(5)])
+    assert np.mean(errors) < 0.5
 
 
 if __name__ == '__main__':
