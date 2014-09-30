@@ -878,6 +878,7 @@ class Model(object):
         """Returns true iff obj has been processed by build."""
         return obj in self.params
 
+# TODO document distortion attribute
 BuiltConnection = collections.namedtuple(
     'BuiltConnection', ['decoders', 'eval_points', 'transform', 'solver_info',
                         'distortion'])
