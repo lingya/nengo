@@ -44,7 +44,7 @@ setup(
     version=version_module.version,
     author="CNRGlab at UWaterloo",
     author_email="celiasmith@uwaterloo.ca",
-    packages=['nengo', 'nengo.tests', 'nengo.networks'],
+    packages=['nengo', 'nengo.tests', 'nengo.networks', 'nengo.spaopt'],
     scripts=[],
     url="https://github.com/ctn-waterloo/nengo",
     license="GPLv3",
