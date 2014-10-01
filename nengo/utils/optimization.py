@@ -26,9 +26,14 @@ class SubvectorRadiusOptimizer(object):
     ens_kwargs : dict
         Further parameter settings of the ensemble optimizing for. (Can also be
         set with the config system.)
+    conn_kwargs : dict
+        Further parameter settings of the connection optimizing for. (Can also
+        be set with the config system.)
     """
 
-    def __init__(self, n_neurons, dimensions, seed=None, **ens_kwargs):
+    def __init__(
+            self, n_neurons, dimensions, seed=None, ens_kwargs={},
+            conn_kwargs={}):
         m = nengo.Network(seed=seed, add_to_container=False)
         with m:
             conn = nengo.Connection(
@@ -36,7 +41,7 @@ class SubvectorRadiusOptimizer(object):
                     n_neurons, dimensions, radius=1.0, **ens_kwargs),
                 nengo.Ensemble(
                     n_neurons=1, dimensions=dimensions,
-                    neuron_type=nengo.Direct()))
+                    neuron_type=nengo.Direct()), **conn_kwargs)
         sim = nengo.Simulator(m)
         self.distortion = sim.model.params[conn].distortion
 
