@@ -1257,20 +1257,6 @@ def build_linear_system(conn, model):
     return eval_points, activities, targets
 
 
-def estimate_distortion(eval_points, activities, targets, sigma):
-    # Derivation of the math was partially done by Kwabena Boahen.
-    n_eval_points, dimensions = eval_points.shape
-
-    u, s, v = np.linalg.svd(activities)
-    proj_targets = np.dot(u.T, targets)
-    regularization = np.ones(len(proj_targets))
-    regularization[:len(s)] = 1. - s * s / (s * s + n_eval_points * sigma ** 2)
-
-    return (np.sum(
-        (proj_targets * regularization[:, np.newaxis]) ** 2) /
-        n_eval_points / dimensions)
-
-
 def build_connection(conn, model, config):  # noqa: C901
     # Create random number generator
     rng = np.random.RandomState(model.seeds[conn])
@@ -1325,17 +1311,6 @@ def build_connection(conn, model, config):  # noqa: C901
         # Normal decoded connection
         eval_points, activities, targets = build_linear_system(conn, model)
 
-        # TODO there should be a better way to obtain sigma
-        sigma = 0.
-        if hasattr(conn.solver, 'sigma'):
-            sigma = conn.solver.sigma
-        elif hasattr(conn.solver, 'reg'):
-            sigma = conn.solver.reg * activities.max()
-        elif hasattr(conn.solver, 'noise'):
-            sigma = conn.solver.noise * activities.max()
-        distortion = estimate_distortion(
-            eval_points, activities, targets, sigma)
-
         if conn.solver.weights:
             # account for transform
             targets = np.dot(targets, transform.T)
@@ -1348,6 +1323,8 @@ def build_connection(conn, model, config):  # noqa: C901
             signal_size = model.sig[conn]['out'].size
         else:
             decoders, solver_info = conn.solver(activities, targets, rng=rng)
+            distortion = np.mean(
+                np.square(targets - np.dot(activities, decoders)))
             signal_size = conn.size_mid
 
         # Add operator for decoders
