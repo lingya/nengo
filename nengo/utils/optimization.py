@@ -43,7 +43,8 @@ class SubvectorRadiusOptimizer(object):
                     n_neurons=1, dimensions=dimensions,
                     neuron_type=nengo.Direct()), **conn_kwargs)
         sim = nengo.Simulator(m)
-        self.distortion = sim.model.params[conn].distortion
+        self.distortion = np.mean(np.square(
+            sim.model.params[conn].solver_info['rmses']))
 
     def find_optimal_radius(self, sp_dimensions, sp_subdimensions=1):
         """Determines the optimal radius for ensembles when splitting up a
