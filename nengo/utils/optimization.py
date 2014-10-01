@@ -92,14 +92,14 @@ class SubvectorRadiusOptimizer(object):
         initialized with of `radius`.
         """
         dist = SubvectorLength(sp_dimensions, sp_subdimensions)
-        in_range = self._sp_subvector_error_in_range(radius)
+        in_range = self._sp_subvector_error_in_range(radius, sp_subdimensions)
         out_of_range = self._sp_subvector_error_out_of_range(
             radius, sp_dimensions, sp_subdimensions)
         return dist.cdf(radius) * in_range + (
             1.0 - dist.cdf(radius)) * out_of_range
 
-    def _sp_subvector_error_in_range(self, radius):
-        return radius * radius * self.distortion
+    def _sp_subvector_error_in_range(self, radius, subdimensions):
+        return radius * radius * subdimensions * self.distortion
 
     def _sp_subvector_error_out_of_range(
             self, radius, dimensions, subdimensions):
