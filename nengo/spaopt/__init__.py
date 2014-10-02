@@ -1,5 +1,6 @@
 from ..spa import SPA
 from ..spa.actions import Actions
+from ..spa.assoc_mem import AssociativeMemory
 from ..spa.basalganglia import BasalGanglia  # TODO
 from .buffer import Buffer
 from .compare import Compare
