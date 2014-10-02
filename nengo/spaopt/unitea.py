@@ -17,7 +17,7 @@ class UnitEA(EnsembleArray):
                 "'dimensions' has to be divisible by 'n_ensembles'.")
 
         optimizer = SubvectorRadiusOptimizer(
-            n_neurons, ens_dimensions, **ens_kwargs)
+            n_neurons, ens_dimensions, ens_kwargs=ens_kwargs)
         scaled_r = radius * optimizer.find_optimal_radius(
             dimensions, dimensions // n_ensembles)
 
