@@ -11,6 +11,14 @@ from nengo.utils.compat import get_terminal_size
 
 
 try:
+    import uuid
+    from IPython.display import HTML, Javascript, display
+    _HAS_IPYTHON = True
+except ImportError:
+    _HAS_IPYTHON = False
+
+
+try:
     from IPython.html import widgets
     from IPython.display import display, Javascript
     import IPython.utils.traitlets as traitlets
@@ -125,6 +133,64 @@ class CmdProgressBar(ProgressBar):
             timedelta(seconds=np.ceil(progress.seconds_passed))).ljust(width)
         sys.stdout.write('\r' + line + os.linesep)
         sys.stdout.flush()
+
+
+class IPythonProgressBar(ProgressBar):
+    def __init__(self, update_interval=0.1):
+        super(IPythonProgressBar, self).__init__(update_interval)
+        self.div_id = str(uuid.uuid4())
+        self._num_js_cells = 0
+
+    def _on_init(self):
+        display(Javascript('''
+            $('div#{id}').remove();'''.format(id=self.div_id)))
+        display(HTML('''
+            <div id="{id}" style="border: 1px solid #cfcfcf;
+                    border-radius: 4px; width: 100%; text-align:
+                    center; position: relative;">
+                <div id="{id}-text" style="position: absolute; width: 100%;">
+                    0%
+                </div>
+                <div id="{id}-bar" style="background-color: #bdd2e6;
+                    width: 0%; transition: width {update_interval}s linear;">
+                    &nbsp;</div>
+            </div>'''.format(
+                id=self.div_id, update_interval=self.update_interval)))
+
+    def _on_update(self, progress):
+        display(Javascript('''
+            $('div#{id}-bar').width('{percent}%');
+            $('div#{id}-text').text('{percent:.0f}%, ETA: {eta}');
+            '''.format(
+                id=self.div_id, percent=100 * progress.progress,
+                eta=timedelta(seconds=np.ceil(progress.eta)))))
+        self._num_js_cells += 1
+        if self._num_js_cells > 100:
+            self._js_clean_up()
+            self._num_js_cells = 0
+
+    def _on_finish(self, progress):
+        display(Javascript('''
+            $('div#{id}-bar').width('{percent}%');
+            $('div#{id}-text').text('Done in {duration}.');
+            '''.format(
+                id=self.div_id, percent=100 * progress.progress,
+                duration=timedelta(seconds=np.ceil(progress.seconds_passed)))))
+        self._js_clean_up()
+
+    def _js_clean_up(self):
+        # This is a hack to remove empty HTML tags from the DOM which get added
+        # when displaying JavaScript in IPython. Those can accumulate for long
+        # running simulations and become a memory hog or even making the
+        # browser unusable. There seems to be no other way than this hack
+        # right now, but I reported the issue upstream:
+        # https://github.com/ipython/ipython/issues/6648
+        display(Javascript('''
+            $('div.output_javascript').each(function(idx, div) {{
+                if ($(div).text() == '') {{
+                    $(div).parent().remove();
+                }}
+            }});'''))
 
 
 if _HAS_WIDGETS:
