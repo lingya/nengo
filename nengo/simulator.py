@@ -15,7 +15,7 @@ import nengo.utils.numpy as npext
 from nengo.builder import Model, Builder, SignalDict
 from nengo.utils.compat import range
 from nengo.utils.graphs import toposort
-from nengo.utils.progress import AutoProgressBar, Progress
+from nengo.utils.progress import AutoProgressBar, Progress, ProgressControl
 from nengo.utils.simulator import operator_depencency_graph
 
 logger = logging.getLogger(__name__)
@@ -192,18 +192,15 @@ class Simulator(object):
         """Simulate for the given number of `dt` steps."""
         if progress_bar is None:
             progress_bar = AutoProgressBar()
-        progress_bar.init()
+        progress_ctrl = ProgressControl(Progress(steps), progress_bar)
 
-        progress = Progress(steps)
-        progress.start()
+        progress_ctrl.start()
         for i in range(steps):
             if i % 1000 == 0:
                 logger.debug("Step %d", i)
             self.step()
-            progress.step()
-            progress_bar.update(progress)
-        progress.finish()
-        progress_bar.update(progress)
+            progress_ctrl.step()
+        progress_ctrl.finish()
 
     def reset(self):
         """Reset the simulator state."""
