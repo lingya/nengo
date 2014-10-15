@@ -12,7 +12,7 @@ from nengo.utils.testing import Plotter
 logger = logging.getLogger(__name__)
 
 
-def test_filt():
+def test_filt(rng):
     dt = 1e-3
     tend = 3.
     t = dt * np.arange(tend / dt)
@@ -20,7 +20,7 @@ def test_filt():
 
     tau = 0.1 / dt
 
-    u = np.random.normal(size=nt)
+    u = rng.normal(size=nt)
 
     tk = np.arange(0, 30 * tau)
     k = 1. / tau * np.exp(-tk / tau)
@@ -37,7 +37,7 @@ def test_filt():
     assert np.allclose(x, y, atol=1e-3, rtol=1e-2)
 
 
-def test_filtfilt():
+def test_filtfilt(rng):
     dt = 1e-3
     tend = 3.
     t = dt * np.arange(tend / dt)
@@ -45,7 +45,7 @@ def test_filtfilt():
 
     tau = 0.03 / dt
 
-    u = np.random.normal(size=nt)
+    u = rng.normal(size=nt)
     x = filt(u, tau)
     x = filt(x[::-1], tau, x0=x[-1])[::-1]
     y = filtfilt(u, tau)
@@ -59,7 +59,7 @@ def test_filtfilt():
     assert np.allclose(x, y)
 
 
-def test_lti_lowpass():
+def test_lti_lowpass(rng):
     dt = 1e-3
     tend = 3.
     t = dt * np.arange(tend / dt)
@@ -71,7 +71,7 @@ def test_lti_lowpass():
     a = [d]
     b = [1, d - 1]
 
-    u = np.random.normal(size=(nt, 10))
+    u = rng.normal(size=(nt, 10))
     x = filt(u, tau / dt)
     y = lti(u, (a, b))
     assert np.allclose(x, y)

@@ -1,5 +1,8 @@
+import numpy as np
 import pytest
+
 import nengo
+import nengo.utils.numpy as npext
 
 
 def pytest_funcarg__Simulator(request):
@@ -19,6 +22,21 @@ def pytest_funcarg__RefSimulator(request):
     reference simulator; this allows them to test easily.
     """
     return nengo.Simulator
+
+
+def function_seed(function, mod=0):
+    c = function.__code__
+    return (hash((c.co_filename, c.co_name)) + mod) % npext.maxint
+
+
+def pytest_funcarg__rng(request):
+    # add 1 to seed to be different from network seed
+    seed = function_seed(request.function, mod=1)
+    return np.random.RandomState(seed)
+
+
+def pytest_funcarg__seed(request):
+    return function_seed(request.function)
 
 
 def pytest_generate_tests(metafunc):
