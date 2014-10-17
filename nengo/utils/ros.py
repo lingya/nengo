@@ -94,7 +94,6 @@ class ForceTorqueNode( RosPubNode ):
   This node publishes a force and torque
   """
   
-  #TODO: add optional weights and transform function for input
   def __init__( self, name, topic, 
                 mask=[True, True, True, True, True, True] ):
     """
@@ -146,12 +145,44 @@ class ForceTorqueNode( RosPubNode ):
                                              dimensions=self.dimensions,
                                              msg_type=Wrench, trans_fnc=self.fn )
 
+class TwistNode( RosPubNode ):
+  """
+  This node publishes forward and angular velocity
+  """
+  
+  def __init__( self, name, topic ):
+    """
+    Parameters
+    ----------
+    name : str
+        An arbitrary name for the object
+    topic : str
+        The name of the ROS topic that is being published
+    """
+
+    self.dimensions = 6
+
+    def fn( values ):
+      twist = Twist()
+      twist.linear.x = values[0]
+      twist.linear.y = values[1]
+      twist.linear.z = values[2]
+      twist.angular.x = values[3]
+      twist.angular.y = values[4]
+      twist.angular.z = values[5]
+      return twist
+
+    self.fn = fn
+
+    super( TwistNode, self ).__init__( name=name, topic=topic,
+                                       dimensions=self.dimensions,
+                                       msg_type=Twist, trans_fnc=self.fn )
+
 class MotionVWNode( RosPubNode ):
   """
   This node publishes forward and angular velocity
   """
   
-  #TODO: add optional weights and transform function for input
   def __init__( self, name, topic ):
     """
     Parameters
@@ -182,7 +213,6 @@ class MotionXYWNode( RosPubNode ):
   This node publishes translational and angular velocity
   """
   
-  #TODO: add optional weights and transform function for input
   def __init__( self, name, topic ):
     """
     Parameters
@@ -213,7 +243,6 @@ class OdometryNode( RosSubNode ):
   This node reads odometry data
   """
   
-  #TODO: add optional weights and transform function for output
   #TODO: need to come up with a better way of specifying 'mask' as well as
   #      a better name for this parameter
   def __init__( self, name, topic, mask=[1,1,1,1,1,1,1,1,1,1,1,1], 
@@ -352,7 +381,6 @@ class PoseNode( RosSubNode ):
   This node reads pose data
   """
   
-  #TODO: add optional weights and transform function for output
   #TODO: need to come up with a better way of specifying 'mask' as well as
   #      a better name for this parameter
   def __init__( self, name, topic, mask=[1,1,1,1,1,1,], 
@@ -451,7 +479,6 @@ class RotorcraftAttitudeNode( RosPubNode ):
   This node publishes roll, pitch, yaw, and thrust
   """
   
-  #TODO: add optional weights and transform function for input
   def __init__( self, name, topic ):
     """
     Parameters
@@ -489,7 +516,6 @@ class SemanticCameraNode( RosSubNode ):
   with the field of view of the camera.
   """
   
-  #TODO: add optional weights and transform function for output
   def __init__( self, name, topic, targets ):
     """
     Parameters
@@ -531,7 +557,6 @@ class VideoCameraNode( RosSubNode ):
   dimensions
   """
   
-  #TODO: add optional weights and transform function for output
   def __init__( self, name, topic ):
     """
     Parameters
