@@ -63,6 +63,7 @@ setup(
     author="CNRGlab at UWaterloo",
     author_email="celiasmith@uwaterloo.ca",
     packages=find_packages(),
+    include_package_data=True,
     scripts=[],
     url="https://github.com/ctn-waterloo/nengo",
     license="Free for non-commercial use",
